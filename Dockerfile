@@ -1,5 +1,9 @@
 FROM python:3
 
+EXPOSE 420/udp
+ENV port 420
+ENV ip "localhost"
+
 WORKDIR /usr/src/app
 
 COPY requirements.txt ./
