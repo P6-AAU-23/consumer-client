@@ -1,4 +1,5 @@
+from Tests import testFunctions
 
-
-def BinerizeAct():
-    print('binerize called')
+def BinarizeAct(img):
+    testFunctions.CheckIfImageIsPassed(img, 'BinarizeAct')
+    return img

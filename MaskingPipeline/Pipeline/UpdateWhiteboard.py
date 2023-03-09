@@ -1,2 +1,4 @@
-def UpdateWhiteboardAct():
-    print('WhiteboardUpdater called')
+from Tests.testFunctions import CheckIfImageIsPassed
+
+def UpdateWhiteboardAct(colouredChanges):
+    CheckIfImageIsPassed(colouredChanges, 'UpdateWhiteBoardAct')
