@@ -8,7 +8,6 @@ from Pipeline import Binarization
 from Pipeline import Changes
 from Pipeline import Colourization
 from Pipeline import Segmentation
-from Pipeline import UpdateWhiteboard
 
 class CaptureActivity:
         
