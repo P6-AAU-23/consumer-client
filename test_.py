@@ -5,5 +5,3 @@ def func(x):
 
 def test_answer():
     assert func(0) == 1
-
-ok
