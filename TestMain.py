@@ -3,17 +3,19 @@ import os
 from pathlib import Path
 from MaskingPipeline.CaptureActivity import CaptureActivity
 
-ROOT_DIR = os.path.realpath(os.path.dirname(__file__))+'\\'
-
-relativePath = Path('Tests/Images')
-#fullPath = relativePath / 'whiteboard1.png'
-fullPath = relativePath / 'hellowfellow.jpg'
+#thomas old stuff
+#ROOT_DIR = os.path.realpath(os.path.dirname(__file__))+'\\'
 #relativePath = 'Tests\Images\whiteboard1.png'
 #fullPath = os.path.join(ROOT_DIR, relativePath)
+
+#my cooler and newer fix
+ROOT_DIR = os.path.realpath(os.path.dirname(__file__))
+relativePath = Path('Tests/Images')
+fullPath = ROOT_DIR / relativePath / 'whiteboard1.png'
+
 image = cv.imread(str(fullPath))
-
-
 cv.waitKey(0)
+
 CA = CaptureActivity(image)
 CA.CaptureActivity(image)
 
