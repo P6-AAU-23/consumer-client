@@ -21,7 +21,25 @@ class PerspectiveTransformer:
         self._set_corners(image)
         self._draw_preview(preview_image)
         cv2.imshow('Corner Selection Preview', preview_image) # type: ignore
-        return image
+        width_upper = distance(self.left_upper_corner, self.right_upper_corner)
+        width_lower = distance(self.left_lower_corner, self.right_upper_corner)
+        max_width = max(width_upper, width_lower)
+        height_left = distance(self.left_upper_corner, self.right_lower_corner)
+        height_right = distance(self.right_upper_corner, self.right_lower_corner)
+        max_height = max(height_left, height_right)
+        target_corners = np.array([
+                (0, 0),
+                (max_width - 1, 0),
+                (max_width - 1, max_height - 1),
+                (0, max_height - 1)
+            ], np.float32)
+        source_corners = np.array([
+                self.left_upper_corner, 
+                self.right_upper_corner, 
+                self.right_lower_corner, 
+                self.left_lower_corner
+            ], np.float32)
+        return warpImage(image, source_corners, target_corners, max_height, max_width)
 
     def _set_corners(self, image):
         any_corner_is_none = \
@@ -94,3 +112,10 @@ class PerspectiveTransformer:
 
 def distance(p ,q):
         return math.sqrt(pow(p[0] - q[0], 2) + pow(p[1] - q[1], 2))
+
+# straigh up just copied from here: 
+# https://stackoverflow.com/questions/2992264/extracting-a-quadrilateral-image-to-a-rectangle
+def warpImage(image, corners, target, height, width):
+    H = cv2.getPerspectiveTransform(corners, target) # type: ignore
+    out = cv2.warpPerspective(image, H, (int(height), int(width))) # type: ignore
+    return out
