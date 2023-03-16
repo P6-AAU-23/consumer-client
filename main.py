@@ -1,6 +1,9 @@
 import cv2
 import argparse
 
+from PerspectiveTransformer import PerspectiveTransformer
+p = PerspectiveTransformer()
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('video_capture_address') 
@@ -23,6 +26,7 @@ def main():
 
 # TODO: implement pipeline here
 def idealize(frame):
+    frame = p.transform_perspective(frame)
     return frame
 
 if __name__ == "__main__":
