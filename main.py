@@ -5,7 +5,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('video_capture_address') 
     args = parser.parse_args()
-    cap = cv2.VideoCapture(args.video_capture_address)
+    cap = cv2.VideoCapture(args.video_capture_address) # type: ignore
     if not cap.isOpened():
         print("Can't open camera")
         exit()
@@ -15,11 +15,11 @@ def main():
             print("Can't receive frame (stream end?). Exiting ...")
             break
         whiteboard = idealize(frame)
-        cv2.imshow('preview', whiteboard)
-        if cv2.waitKey(1) == ord('q'):
+        cv2.imshow('preview', whiteboard) # type: ignore
+        if cv2.waitKey(1) == ord('q'): # type: ignore
             break
     cap.release()
-    cv2.destroyAllWindows()
+    cv2.destroyAllWindows() # type: ignore
 
 # TODO: implement pipeline here
 def idealize(frame):
