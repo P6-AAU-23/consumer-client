@@ -13,19 +13,22 @@ class CaptureActivity:
         
     VirtualWhiteboard = None
 
+    def __init__(self, img):
+        self.VirtualWhiteboard = np.full(img.shape, 255, dtype=np.uint8)
+
     def CaptureActivity(self, img):
         timestamp = time.time()
 
         origImg = img
         
-        if self.VirtualWhiteboard == None:
-            self.VirtualWhiteboard = np.full(img.shape, 255, dtype=np.uint8)
+        #if self.VirtualWhiteboard == None:
+        #    self.VirtualWhiteboard = np.full(img.shape, 255, dtype=np.uint8)
+        greyScaled = cv.cvtColor(origImg, cv.COLOR_BGR2GRAY)
         
         segImg = Segmentation.SegmentAct(img)
-        binImg = Binarization.BinarizeAct(img)
+        binImg = Binarization.BinarizeAct(greyScaled)
         TrackedChangesMask = Changes.ChangesAct(binImg, segImg)
         ColouredChanges = Colourization.ColouringAct(TrackedChangesMask, origImg)
         self.VirtualWhiteboard = UpdateWhiteboard.UpdateWhiteboardAct(ColouredChanges, self.VirtualWhiteboard)
 
         print((time.time()-timestamp)*1000)
-

@@ -3,9 +3,8 @@ import cv2 as cv
 
 def UpdateWhiteboardAct(colouredChanges, virtualWhiteboard):
 
-    CheckIfImageIsPassed(colouredChanges, 'colouredChanges in UpdateWhiteBoardAct')
-    CheckIfImageIsPassed(virtualWhiteboard, 'virtualWhiteboard in UpdateWhiteBoardAct')
+    virtualWhiteboardMasked = cv.bitwise_or(virtualWhiteboard, virtualWhiteboard, Mask=colouredChanges)
 
-    updatedWhiteboard = cv.bitwise_and(colouredChanges, virtualWhiteboard)
+    updatedWhiteboard = cv.bitwise_and(colouredChanges, virtualWhiteboardMasked)
     
-    return colouredChanges
+    return updatedWhiteboard
