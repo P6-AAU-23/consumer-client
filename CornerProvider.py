@@ -5,14 +5,16 @@ import numpy as np
 
 from helper import distance
 
-class CornerProvider(pykka.ThreadingActor):
+class CornerProvider(
+        # pykka.ThreadingActor
+        ):
     CORNER_POINT_SIZE = 10
     FRAME_COLOR = (0, 255, 0)
     FRAME_THICKNESS = 1
     UNINITIALIZED_CORNER = (-1, -1)
 
     def __init__(self, gui_window_name: str):
-        super().__init__()
+        # super().__init__()
         self.corners: Dict[str, Tuple[int, int]] = {
             'upper_left': CornerProvider.UNINITIALIZED_CORNER,
             'upper_right': CornerProvider.UNINITIALIZED_CORNER,
@@ -20,8 +22,9 @@ class CornerProvider(pykka.ThreadingActor):
             'lower_left': CornerProvider.UNINITIALIZED_CORNER,
         }
         self._move_this = 'None'
-        cv2.namedWindow(gui_window_name)  # type: ignore
-        cv2.setMouseCallback(gui_window_name, self._move_corner)  # type: ignore
+        self.gui_window_name = gui_window_name
+        cv2.namedWindow(self.gui_window_name)  # type: ignore
+        cv2.setMouseCallback(self.gui_window_name, self._move_corner)  # type: ignore
 
     def get_corners(self):
         return np.array(list(self.corners.values()))
@@ -31,11 +34,11 @@ class CornerProvider(pykka.ThreadingActor):
             self._initialize_corners(image)
         preview_image = image.copy()
         self._draw_preview(preview_image)
-        cv2.imshow('Corner Selection Preview', preview_image) # type: ignore
+        cv2.imshow(self.gui_window_name, preview_image) # type: ignore
 
     def stop(self):
         cv2.destroyAllWindows() # type: ignore
-        super().stop()
+        # super().top()
 
     def _initialize_corners(self, image):
             height, width, _ = image.shape

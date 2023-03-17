@@ -12,7 +12,8 @@ def main():
     if not cap.isOpened():
         print("Can't open camera")
         exit()
-    Pipeline.start(args, cap)
+    pipeline = Pipeline(args, cap)
+    pipeline.run()
 
 if __name__ == "__main__":
     main()
