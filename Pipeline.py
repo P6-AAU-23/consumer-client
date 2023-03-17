@@ -1,12 +1,9 @@
-import pykka
 import cv2
 
 from CornerProvider import CornerProvider
 from helper import quadrilateral_to_rectangle
 
-class Pipeline(
-        # pykka.ThreadingActor
-        ):
+class Pipeline():
     def __init__(self, args, video_capture):
         super().__init__()
         self.corner_provider = CornerProvider('Corner Selection Preview')
@@ -31,5 +28,4 @@ class Pipeline(
         self.video_capture.release()
         cv2.destroyAllWindows() # type: ignore
         self.corner_provider.stop()
-        # super().stop()
         

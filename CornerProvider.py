@@ -1,20 +1,15 @@
 from typing import Dict, Tuple
-import pykka
+from helper import distance
 import cv2
 import numpy as np
 
-from helper import distance
-
-class CornerProvider(
-        # pykka.ThreadingActor
-        ):
+class CornerProvider():
     CORNER_POINT_SIZE = 10
     FRAME_COLOR = (0, 255, 0)
     FRAME_THICKNESS = 1
     UNINITIALIZED_CORNER = (-1, -1)
 
     def __init__(self, gui_window_name: str):
-        # super().__init__()
         self.corners: Dict[str, Tuple[int, int]] = {
             'upper_left': CornerProvider.UNINITIALIZED_CORNER,
             'upper_right': CornerProvider.UNINITIALIZED_CORNER,
@@ -38,7 +33,6 @@ class CornerProvider(
 
     def stop(self):
         cv2.destroyAllWindows() # type: ignore
-        # super().top()
 
     def _initialize_corners(self, image):
             height, width, _ = image.shape
