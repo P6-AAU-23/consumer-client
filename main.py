@@ -1,8 +1,8 @@
 import cv2
 import argparse
 
-from PerspectiveTransformer import PerspectiveTransformer
-p = PerspectiveTransformer()
+from Pipeline import Pipeline
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -12,22 +12,7 @@ def main():
     if not cap.isOpened():
         print("Can't open camera")
         exit()
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            print("Can't receive frame (stream end?). Exiting ...")
-            break
-        whiteboard = idealize(frame)
-        cv2.imshow('preview', whiteboard) # type: ignore
-        if cv2.waitKey(1) == ord('q'): # type: ignore
-            break
-    cap.release()
-    cv2.destroyAllWindows() # type: ignore
-
-# TODO: implement pipeline here
-def idealize(frame):
-    frame = p.transform_perspective(frame)
-    return frame
+    Pipeline.start(args, cap)
 
 if __name__ == "__main__":
     main()
