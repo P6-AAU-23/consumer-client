@@ -27,5 +27,4 @@ class Pipeline():
     def stop(self):
         self.video_capture.release()
         cv2.destroyAllWindows() # type: ignore
-        self.corner_provider.stop()
         
