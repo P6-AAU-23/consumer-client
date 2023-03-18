@@ -1,11 +1,12 @@
 import pytest
 import numpy as np
 from CornerProvider import CornerProvider
+from unittest.mock import patch
 
 @pytest.fixture
 def cp_initialized():
     image = np.zeros((100, 200, 3), dtype=np.uint8)
-    cp = CornerProvider("test_window")
+    cp = CornerProvider("test_window", use_gui=False)
     cp._initialize_corners(image)
     return cp
 

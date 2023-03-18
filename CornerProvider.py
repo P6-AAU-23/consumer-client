@@ -12,11 +12,12 @@ class CornerProvider():
     FRAME_THICKNESS = 1
     UNINITIALIZED_CORNER = (-1, -1)
 
-    def __init__(self, gui_window_name: str):
+    def __init__(self, gui_window_name: str, use_gui: bool = True):
         """
         Initializes a CornerProvider instance with a named OpenCV window and a mouse callback function.
 
         :param gui_window_name: The name of the OpenCV window.
+        :param use_gui: Whether to use the GUI functionality or not. Defaults to True.
         """
         self.corners: Dict[str, Tuple[int, int]] = {
             'upper_left': CornerProvider.UNINITIALIZED_CORNER,
@@ -25,9 +26,11 @@ class CornerProvider():
             'lower_left': CornerProvider.UNINITIALIZED_CORNER,
         }
         self._move_this = 'None'
-        self.gui_window_name = gui_window_name
-        cv2.namedWindow(self.gui_window_name)  # type: ignore
-        cv2.setMouseCallback(self.gui_window_name, self._move_corner)  # type: ignore
+        self.use_gui = use_gui
+        if self.use_gui:
+            self.gui_window_name = gui_window_name
+            cv2.namedWindow(self.gui_window_name)  # type: ignore
+            cv2.setMouseCallback(self.gui_window_name, self._move_corner)  # type: ignore
 
     def get_corners(self) -> Dict[str, Tuple[int, int]]:
         """
@@ -50,7 +53,8 @@ class CornerProvider():
             self._initialize_corners(image)
         preview_image = image.copy()
         self._draw_preview(preview_image)
-        cv2.imshow(self.gui_window_name, preview_image)  # type: ignore
+        if self.use_gui:
+            cv2.imshow(self.gui_window_name, preview_image)  # type: ignore
         return preview_image
 
 
