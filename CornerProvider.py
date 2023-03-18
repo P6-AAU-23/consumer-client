@@ -38,17 +38,21 @@ class CornerProvider():
         """
         return self.corners
 
-    def update(self, image: np.ndarray):
+    def update(self, image: np.ndarray) -> np.ndarray:
         """
         Updates the image displayed in the GUI window, drawing corner points and lines on the image.
+        Returns the modified image with corner points and lines drawn.
 
         :param image: The image to be updated.
+        :return: The modified image (preview_image) with corner points and lines drawn.
         """
         if not self._corners_are_on_image(image):
             self._initialize_corners(image)
         preview_image = image.copy()
         self._draw_preview(preview_image)
         cv2.imshow(self.gui_window_name, preview_image)  # type: ignore
+        return preview_image
+
 
     def _initialize_corners(self, image: np.ndarray):
         """Initializes corner points based on the image dimensions."""
