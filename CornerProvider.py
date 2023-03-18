@@ -29,9 +29,14 @@ class CornerProvider():
         cv2.namedWindow(self.gui_window_name)  # type: ignore
         cv2.setMouseCallback(self.gui_window_name, self._move_corner)  # type: ignore
 
-    def get_corners(self) -> np.ndarray:
-        """Returns the corner points as a numpy array."""
-        return np.array(list(self.corners.values()))
+    def get_corners(self) -> Dict[str, Tuple[int, int]]:
+        """
+        Returns a dictionary containing the coordinates of the corner points.
+
+        :return: A dictionary with keys 'upper_left', 'upper_right', 'lower_right', 'lower_left'
+                 and values that are tuples of the x and y coordinates of the corresponding corner point.
+        """
+        return self.corners
 
     def update(self, image: np.ndarray):
         """
