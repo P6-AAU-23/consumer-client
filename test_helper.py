@@ -5,17 +5,20 @@ import cv2
 def test_warp_quadrilateral_to_rectangle_no_transformation():
     """
     Tests the case when the input quadrilateral region is already a rectangle with the same size as the input image.
-    In this case, the output should be the same as the input, except for a one-pixel border.
+    In this case, the output should be the same as the input.
     """
     image = np.zeros((100, 100, 3), dtype=np.uint8)
+    cv2.rectangle(image, (25, 25), (75, 75), (255, 255, 255), -1)  # type: ignore
     corners = {
         'upper_left': (0, 0),
-        'upper_right': (99, 0),
-        'lower_right': (99, 99),
-        'lower_left': (0, 99)
+        'upper_right': (100, 0),
+        'lower_right': (100, 100),
+        'lower_left': (0, 100)
     }
     warped_image = quadrilateral_to_rectangle(image, corners)
-    assert np.array_equal(image[0:-1, 0:-1], warped_image)
+    print(image.shape)
+    print(warped_image.shape)
+    assert np.array_equal(image, warped_image)
 
 def test_quadrilateral_to_rectangle_known_transformation():
     """
