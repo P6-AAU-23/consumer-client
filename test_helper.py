@@ -27,7 +27,7 @@ def test_quadrilateral_to_rectangle_known_transformation():
     the perspective warp to extract the 50x50 rectangle. The result is then compared to a 50x50 image of a white rectangle.
     """
     image = np.zeros((100, 100, 3), dtype=np.uint8)
-    cv2.rectangle(image, (25, 25), (73, 73), (255, 255, 255), -1)  # type: ignore
+    cv2.rectangle(image, (25, 25), (74, 74), (255, 255, 255), -1)  # type: ignore
     corners = {
         'upper_left': (25, 25),
         'upper_right': (75, 25),
