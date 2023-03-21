@@ -18,7 +18,6 @@ cv2.waitKey(1)
                 setup=f'''
 from Pipeline import Pipeline
 import cv2
-import numpy as np
 gc.enable()
 image = cv2.imread("resources/benchmark{i}.jpg")
 pipeline = Pipeline(0)
@@ -28,7 +27,7 @@ pipeline = Pipeline(0)
         actual_fps = (SCALE) / time
         ratio = actual_fps / FPS_GOAL
         height, _, _ = cv2.imread(f'resources/benchmark{i}.jpg').shape # type: ignore 
-        print(f'----------------------------------{height}----------------------------------')
+        print(f'----------------------------------{height}p----------------------------------')
         print(f'Goal FPS was {FPS_GOAL}.')
         print(f'Actual FPS was {actual_fps}.')
         if 1 < ratio:
