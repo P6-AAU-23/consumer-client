@@ -2,6 +2,7 @@ from helper import quadrilateral_to_rectangle
 import numpy as np
 import cv2
 
+
 def test_warp_quadrilateral_to_rectangle_no_transformation():
     """
     Tests the case when the input quadrilateral region is already a rectangle with the same size as the input image.
@@ -10,15 +11,16 @@ def test_warp_quadrilateral_to_rectangle_no_transformation():
     image = np.zeros((100, 100, 3), dtype=np.uint8)
     cv2.rectangle(image, (25, 25), (75, 75), (255, 255, 255), -1)  # type: ignore
     corners = {
-        'upper_left': (0, 0),
-        'upper_right': (100, 0),
-        'lower_right': (100, 100),
-        'lower_left': (0, 100)
+        "upper_left": (0, 0),
+        "upper_right": (100, 0),
+        "lower_right": (100, 100),
+        "lower_left": (0, 100),
     }
     warped_image = quadrilateral_to_rectangle(image, corners)
     print(image.shape)
     print(warped_image.shape)
     assert np.array_equal(image, warped_image)
+
 
 def test_quadrilateral_to_rectangle_known_transformation():
     """
@@ -29,13 +31,12 @@ def test_quadrilateral_to_rectangle_known_transformation():
     image = np.zeros((100, 100, 3), dtype=np.uint8)
     cv2.rectangle(image, (25, 25), (74, 74), (255, 255, 255), -1)  # type: ignore
     corners = {
-        'upper_left': (25, 25),
-        'upper_right': (75, 25),
-        'lower_right': (75, 75),
-        'lower_left': (25, 75)
+        "upper_left": (25, 25),
+        "upper_right": (75, 25),
+        "lower_right": (75, 75),
+        "lower_left": (25, 75),
     }
     warped_image = quadrilateral_to_rectangle(image, corners)
     expected_image = np.zeros((50, 50, 3), dtype=np.uint8)
     cv2.rectangle(expected_image, (0, 0), (49, 49), (255, 255, 255), -1)  # type: ignore
     assert np.array_equal(warped_image, expected_image)
-

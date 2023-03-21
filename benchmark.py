@@ -1,29 +1,40 @@
 import timeit
+import cv2
 
 FPS_GOAL = 30
-SCALE = 100
-GREEN = '\033[1;32;48m'
-RED = '\033[1;31;48m'
-END = '\033[1;37;0m'
+SCALE = 1000
+GREEN = "\033[1;32;48m"
+RED = "\033[1;31;48m"
+END = "\033[1;37;0m"
 
-if __name__ == '__main__':
-    time = timeit.timeit(
-            'pipeline.process(image)',
-            setup='''
+if __name__ == "__main__":
+    for i in range(3):
+        time = timeit.timeit(
+            """
+whiteboard = pipeline.process(image)
+cv2.imshow("benchmark", whiteboard)
+cv2.waitKey(1)
+                """,
+            setup=f"""
 from Pipeline import Pipeline
 import cv2
 gc.enable()
-image = cv2.imread('resources/whiteboard1.png')
+image = cv2.imread("resources/benchmark{i}.jpg")
 pipeline = Pipeline(0)
-            ''',
-            number=FPS_GOAL * SCALE
+                """,
+            number=SCALE,
         )
-    actual_fps = (FPS_GOAL * SCALE) / time
-    ratio = actual_fps / FPS_GOAL
-    print(f'Goal FPS was {FPS_GOAL}.')
-    print(f'Actual FPS was {actual_fps}.')
-    if 1 < ratio:
-        print(GREEN + f'The Pipeline is {ratio} faster than it needs to be :)' + END)
-    else:
-        print(RED + f'The Pipeline is {ratio} slower than it needs to be :(' + END)
-
+        actual_fps = (SCALE) / time
+        ratio = actual_fps / FPS_GOAL
+        height, _, _ = cv2.imread(f"resources/benchmark{i}.jpg").shape  # type: ignore
+        print(
+            f"----------------------------------{height}p----------------------------------"
+        )
+        print(f"Goal FPS was {FPS_GOAL}.")
+        print(f"Actual FPS was {actual_fps}.")
+        if 1 < ratio:
+            print(
+                GREEN + f"The Pipeline is {ratio} faster than it needs to be :)" + END
+            )
+        else:
+            print(RED + f"The Pipeline is {ratio} slower than it needs to be :(" + END)

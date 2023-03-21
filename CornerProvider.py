@@ -3,10 +3,12 @@ from helper import distance
 import cv2
 import numpy as np
 
-class CornerProvider():
+
+class CornerProvider:
     """
     This class provides an interface to manipulate corner points on a given image using OpenCV.
     """
+
     CORNER_POINT_SIZE = 10
     FRAME_COLOR = (0, 255, 0)
     FRAME_THICKNESS = 1
@@ -20,12 +22,12 @@ class CornerProvider():
         :param use_gui: Whether to use the GUI functionality or not. Defaults to True.
         """
         self.corners: Dict[str, Tuple[int, int]] = {
-            'upper_left': CornerProvider.UNINITIALIZED_CORNER,
-            'upper_right': CornerProvider.UNINITIALIZED_CORNER,
-            'lower_right': CornerProvider.UNINITIALIZED_CORNER,
-            'lower_left': CornerProvider.UNINITIALIZED_CORNER,
+            "upper_left": CornerProvider.UNINITIALIZED_CORNER,
+            "upper_right": CornerProvider.UNINITIALIZED_CORNER,
+            "lower_right": CornerProvider.UNINITIALIZED_CORNER,
+            "lower_left": CornerProvider.UNINITIALIZED_CORNER,
         }
-        self._move_this = 'None'
+        self._move_this = "None"
         self.use_gui = use_gui
         if self.use_gui:
             self.gui_window_name = gui_window_name
@@ -57,19 +59,18 @@ class CornerProvider():
             cv2.imshow(self.gui_window_name, preview_image)  # type: ignore
         return preview_image
 
-
     def _initialize_corners(self, image: np.ndarray):
         """Initializes corner points based on the image dimensions."""
         height, width, _ = image.shape
-        self.corners['upper_left'] = (0, 0)
-        self.corners['upper_right'] = (width - 1, 0)
-        self.corners['lower_right'] = (width - 1, height - 1)
-        self.corners['lower_left'] = (0, height - 1)
+        self.corners["upper_left"] = (0, 0)
+        self.corners["upper_right"] = (width - 1, 0)
+        self.corners["lower_right"] = (width - 1, height - 1)
+        self.corners["lower_left"] = (0, height - 1)
 
     def _corners_are_on_image(self, image: np.ndarray) -> bool:
         """Checks if all corner points are within the image boundaries."""
         height, width, _ = image.shape
-        for (x, y) in self.corners.values():
+        for x, y in self.corners.values():
             if x < 0 or x >= width or y < 0 or y >= height:
                 return False
         return True
@@ -80,7 +81,11 @@ class CornerProvider():
             self._draw_corner(preview_image, point)
         corner_points = list(self.corners.values())
         for i in range(len(corner_points)):
-            self._draw_line(preview_image, corner_points[i], corner_points[(i + 1) % len(corner_points)])
+            self._draw_line(
+                preview_image,
+                corner_points[i],
+                corner_points[(i + 1) % len(corner_points)],
+            )
 
     def _draw_corner(self, preview_image: np.ndarray, corner: Tuple[int, int]):
         """
@@ -94,10 +99,15 @@ class CornerProvider():
             corner,
             CornerProvider.CORNER_POINT_SIZE,
             CornerProvider.FRAME_COLOR,
-            -1 # -1 fills the circle
+            -1,  # -1 fills the circle
         )
 
-    def _draw_line(self, preview_image: np.ndarray, corner1: Tuple[int, int], corner2: Tuple[int, int]):
+    def _draw_line(
+        self,
+        preview_image: np.ndarray,
+        corner1: Tuple[int, int],
+        corner2: Tuple[int, int],
+    ):
         """
         Draws a line between two corner points on the image.
 
@@ -110,7 +120,7 @@ class CornerProvider():
             corner1,
             corner2,
             CornerProvider.FRAME_COLOR,
-            CornerProvider.FRAME_THICKNESS
+            CornerProvider.FRAME_THICKNESS,
         )
 
     def _move_corner(self, event: int, x: int, y: int, flags: int, param: Any):
@@ -123,12 +133,12 @@ class CornerProvider():
         :param flags: The OpenCV event flags.
         :param param: The user-defined parameter passed by the OpenCV mouse callback.
         """
-        if event == cv2.EVENT_MOUSEMOVE and self._move_this != 'None':  # type: ignore
+        if event == cv2.EVENT_MOUSEMOVE and self._move_this != "None":  # type: ignore
             self.corners[self._move_this] = (int(x), int(y))
         elif event == cv2.EVENT_LBUTTONDOWN:  # type: ignore
             self._move_this = self._on_corner(x, y)
         elif event == cv2.EVENT_LBUTTONUP:  # type: ignore
-            self._move_this = 'None'
+            self._move_this = "None"
 
     def _on_corner(self, x: int, y: int) -> str:
         """
@@ -141,5 +151,4 @@ class CornerProvider():
         for corner, point in self.corners.items():
             if distance((x, y), point) <= CornerProvider.CORNER_POINT_SIZE:
                 return corner
-        return 'None'
-
+        return "None"
