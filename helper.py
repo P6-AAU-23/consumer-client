@@ -34,7 +34,7 @@ def quadrilateral_to_rectangle(image: np.ndarray, corners: Dict[str, Tuple[int, 
             (max_width, max_height),
             (0, max_height)
         ], dtype=np.float32)
-    H = cv2.getPerspectiveTransform(np.float32(list(corners.values())), target_corners) # type: ignore
-    out = cv2.warpPerspective(image, H, (max_width, max_height)) # type: ignore
+    quad_to_rect_transform = cv2.getPerspectiveTransform(np.float32(list(corners.values())), target_corners) # type: ignore
+    out = cv2.warpPerspective(image, quad_to_rect_transform, (max_width, max_height)) # type: ignore
     return out
 
