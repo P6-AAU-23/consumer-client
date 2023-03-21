@@ -3,11 +3,12 @@ import argparse
 
 from Pipeline import Pipeline
 
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('video_capture_address') 
+    parser.add_argument("video_capture_address")
     args = parser.parse_args()
-    cap = cv2.VideoCapture(args.video_capture_address) # type: ignore
+    cap = cv2.VideoCapture(args.video_capture_address)  # type: ignore
     pipeline = Pipeline(args)
     if not cap.isOpened():
         print("Can't open camera")
@@ -18,11 +19,12 @@ def main():
             print("Can't receive frame (stream end?). Exiting ...")
             break
         whiteboard = pipeline.process(image)
-        cv2.imshow('preview', whiteboard) # type: ignore
-        if cv2.waitKey(1) == ord('q'): # type: ignore
+        cv2.imshow("preview", whiteboard)  # type: ignore
+        if cv2.waitKey(1) == ord("q"):  # type: ignore
             break
     cap.release()
-    cv2.destroyAllWindows() # type: ignore
+    cv2.destroyAllWindows()  # type: ignore
+
 
 if __name__ == "__main__":
     main()

@@ -1,11 +1,10 @@
-import cv2
-
 from CornerProvider import CornerProvider
 from helper import quadrilateral_to_rectangle
 
-class Pipeline():
+
+class Pipeline:
     def __init__(self, args):
-        self.corner_provider = CornerProvider('Corner Selection Preview')
+        self.corner_provider = CornerProvider("Corner Selection Preview")
         self.args = args
 
     def process(self, image):
@@ -13,5 +12,3 @@ class Pipeline():
         corners = self.corner_provider.get_corners()
         whiteboard = quadrilateral_to_rectangle(image, corners)
         return whiteboard
-
-        
