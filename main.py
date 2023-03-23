@@ -1,22 +1,30 @@
-import os
-import socketserver
+import cv2
+import argparse
 
-class MyUDPHandler(socketserver.BaseRequestHandler):
-    """
-    This class works similar to the TCP handler class, except that
-    self.request consists of a pair of data and client socket, and since
-    there is no connection the client address must be given explicitly
-    when sending data back via sendto().
-    """
+from Pipeline import Pipeline
 
-    def handle(self):
-        data = self.request[0].strip()
-        socket = self.request[1]
-        print("{} wrote:".format(self.client_address[0]))
-        print(data)
-        socket.sendto(data.upper(), self.client_address)
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("video_capture_address")
+    args = parser.parse_args()
+    cap = cv2.VideoCapture(args.video_capture_address)  # type: ignore
+    pipeline = Pipeline(args)
+    if not cap.isOpened():
+        print("Can't open camera")
+        exit()
+    while True:
+        ret, image = cap.read()
+        if not ret:
+            print("Can't receive frame (stream end?). Exiting ...")
+            break
+        whiteboard = pipeline.process(image)
+        cv2.imshow("preview", whiteboard)  # type: ignore
+        if cv2.waitKey(1) == ord("q"):  # type: ignore
+            break
+    cap.release()
+    cv2.destroyAllWindows()  # type: ignore
+
 
 if __name__ == "__main__":
-    HOST, PORT = os.environ["ip"], int(os.environ["port"])
-    with socketserver.UDPServer((HOST, PORT), MyUDPHandler) as server:
-        server.serve_forever()
+    main()
