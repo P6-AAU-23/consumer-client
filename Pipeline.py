@@ -13,9 +13,10 @@ class Pipeline:
         self.corner_provider.update(image)
         corners = self.corner_provider.get_corners()
         whiteboard = quadrilateral_to_rectangle(image, corners)
-        whiteboard = remove_foreground(image) 
-        whiteboard = idealize_colors(whiteboard)
-        whiteboard = inpaint_missing(whiteboard)
+        whiteboard = binarize(image)
+        # whiteboard = remove_foreground(image) 
+        # whiteboard = idealize_colors(whiteboard)
+        # whiteboard = inpaint_missing(whiteboard)
         return whiteboard
 
 
@@ -52,6 +53,16 @@ def remove_foreground(image: np.ndarray) -> np.ndarray:
 
 def idealize_colors(image: np.ndarray) -> np.ndarray:
     return image
+
+def idealize_colors_adaptive_threshold_masking(image: np.ndarray) -> np.ndarray:
+    return image
+
+def binarize(image: np.ndarray) -> np.ndarray:
+    image_grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # type: ignore  
+    binary_image = cv2.adaptiveThreshold(image_grey, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 4)  # type: ignore
+    binary_image = cv2.medianBlur(binary_image, 3)  # type: ignore
+    binary_image = cv2.bitwise_not(binary_image) # type: ignore
+    return binary_image
 
 
 def inpaint_missing(image: np.ndarray) -> np.ndarray:
