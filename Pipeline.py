@@ -14,7 +14,7 @@ class Pipeline:
         self.corner_provider.update(image)
         corners = self.corner_provider.get_corners()
         whiteboard = quadrilateral_to_rectangle(image, corners)
-        whiteboard = remove_foreground(whiteboard) 
+        whiteboard = remove_foreground(whiteboard)
         whiteboard = idealize_colors(whiteboard, Idealize_colors_mode.MASKING)
         whiteboard = inpaint_missing(whiteboard)
         return whiteboard
@@ -50,6 +50,7 @@ def quadrilateral_to_rectangle(
 def remove_foreground(image: np.ndarray) -> np.ndarray:
     return image
 
+
 class Idealize_colors_mode(Enum):
     MASKING = 1
     ASSIGN_EXTREME = 2
@@ -57,10 +58,10 @@ class Idealize_colors_mode(Enum):
 
 def idealize_colors(image: np.ndarray, mode: Idealize_colors_mode) -> np.ndarray:
     if mode == Idealize_colors_mode.MASKING:
-        return  idealize_colors_masking(image)
+        return idealize_colors_masking(image)
     if mode == Idealize_colors_mode.ASSIGN_EXTREME:
-        return  idealize_colors_assign_extreme(image)
-    else: 
+        return idealize_colors_assign_extreme(image)
+    else:
         return image
 
 
@@ -86,15 +87,15 @@ def idealize_colors_assign_extreme(image: np.ndarray) -> np.ndarray:
 
 def apply_mask(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
     masked_image = cv2.bitwise_and(image, image, mask=mask)  # type: ignore
-    masked_image[mask==0] = 255  # make the masked area white
+    masked_image[mask == 0] = 255  # make the masked area white
     return masked_image
 
 
 def binarize(image: np.ndarray) -> np.ndarray:
-    image_grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # type: ignore  
+    image_grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # type: ignore
     binary_image = cv2.adaptiveThreshold(image_grey, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 4)  # type: ignore
     binary_image = cv2.medianBlur(binary_image, 3)  # type: ignore
-    binary_image = cv2.bitwise_not(binary_image) # type: ignore
+    binary_image = cv2.bitwise_not(binary_image)  # type: ignore
     return binary_image
 
 
