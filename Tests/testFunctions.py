@@ -12,4 +12,10 @@ def CheckIfImageIsPassed(image, pipelineStep):
 def GetPath():
     ROOT_DIR = os.path.realpath(os.path.dirname(__file__)+'/..')
     relativePath = Path('Tests/Images')
-    return ROOT_DIR / relativePath 
+    path = ROOT_DIR / relativePath
+
+    print()
+    print('PATH USED TO IMAGE: "'+ str(path)+'"')
+    print()
+
+    return  path
