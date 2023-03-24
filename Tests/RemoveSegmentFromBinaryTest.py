@@ -1,6 +1,15 @@
 import cv2 as cv
+import os
+import sys
+
+PROJECT_ROOT = os.path.abspath(os.path.join(
+                  os.path.dirname(__file__), 
+                  os.pardir)
+)
+sys.path.append(PROJECT_ROOT)
 from MaskingPipeline.Pipeline.SegmentationRemoval import RemoveSegmentAct
 from Tests.testFunctions import GetPath
+
 
 def RemoveSegmentFromBinaryTest():
     path = GetPath()
@@ -22,5 +31,7 @@ def RemoveSegmentFromBinaryTest():
     cv.imshow('Out:Segmentation removed', segbin)
 
     cv.waitKey(0)
+    cv.destroyAllWindows()
 
-
+if __name__ == '__main__':
+    RemoveSegmentFromBinaryTest()
