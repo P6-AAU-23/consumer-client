@@ -99,7 +99,7 @@ def binarize(image: np.ndarray) -> np.ndarray:
     return binary_image
 
 
-def increase_hue(image: np.ndarray, amount: float) -> np.ndarray:
+def scale_saturation(image: np.ndarray, amount: float) -> np.ndarray:
     hsv_image = cv2.cvtColor(image, cv2.COLOR_BGRA2HSV)  # type: ignore
     # Increase the saturation by amount%
     hsv_image[..., 1] = hsv_image[..., 1] * amount
