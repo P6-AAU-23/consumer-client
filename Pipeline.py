@@ -3,6 +3,7 @@ from typing import Dict, Tuple
 from helper import distance
 import numpy as np
 import cv2
+from enum import Enum
 
 
 class Pipeline:
@@ -13,10 +14,9 @@ class Pipeline:
         self.corner_provider.update(image)
         corners = self.corner_provider.get_corners()
         whiteboard = quadrilateral_to_rectangle(image, corners)
-        whiteboard = binarize(image)
-        # whiteboard = remove_foreground(image) 
-        # whiteboard = idealize_colors(whiteboard)
-        # whiteboard = inpaint_missing(whiteboard)
+        whiteboard = remove_foreground(whiteboard) 
+        whiteboard = idealize_colors(whiteboard, Idealize_colors_mode.MASKING)
+        whiteboard = inpaint_missing(whiteboard)
         return whiteboard
 
 
@@ -50,12 +50,45 @@ def quadrilateral_to_rectangle(
 def remove_foreground(image: np.ndarray) -> np.ndarray:
     return image
 
+class Idealize_colors_mode(Enum):
+    MASKING = 1
+    ASSIGN_EXTREME = 2
 
-def idealize_colors(image: np.ndarray) -> np.ndarray:
-    return image
 
-def idealize_colors_adaptive_threshold_masking(image: np.ndarray) -> np.ndarray:
-    return image
+def idealize_colors(image: np.ndarray, mode: Idealize_colors_mode) -> np.ndarray:
+    if mode == Idealize_colors_mode.MASKING:
+        return  idealize_colors_masking(image)
+    if mode == Idealize_colors_mode.ASSIGN_EXTREME:
+        return  idealize_colors_assign_extreme(image)
+    else: 
+        return image
+
+
+def idealize_colors_masking(image: np.ndarray) -> np.ndarray:
+    mask = binarize(image)
+    masked_image = apply_mask(image, mask)
+    return masked_image
+
+
+def idealize_colors_assign_extreme(image: np.ndarray) -> np.ndarray:
+    threshold = 128
+    max_val = 255
+    # Split the image into B, G, and R channels
+    b, g, r = cv2.split(image)  # type: ignore
+    # Apply the threshold to each channel
+    _, b = cv2.threshold(b, threshold, max_val, cv2.THRESH_BINARY)  # type: ignore
+    _, g = cv2.threshold(g, threshold, max_val, cv2.THRESH_BINARY)  # type: ignore
+    _, r = cv2.threshold(r, threshold, max_val, cv2.THRESH_BINARY)  # type: ignore
+    # Merge the thresholded channels back into a single image
+    recolored_image = cv2.merge((b, g, r))  # type: ignore
+    return recolored_image
+
+
+def apply_mask(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
+    masked_image = cv2.bitwise_and(image, image, mask=mask)  # type: ignore
+    masked_image[mask==0] = 255  # make the masked area white
+    return masked_image
+
 
 def binarize(image: np.ndarray) -> np.ndarray:
     image_grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # type: ignore  
@@ -63,6 +96,14 @@ def binarize(image: np.ndarray) -> np.ndarray:
     binary_image = cv2.medianBlur(binary_image, 3)  # type: ignore
     binary_image = cv2.bitwise_not(binary_image) # type: ignore
     return binary_image
+
+
+def increase_hue(image: np.ndarray, amount: float) -> np.ndarray:
+    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGRA2HSV)  # type: ignore
+    # Increase the saturation by amount%
+    hsv_image[..., 1] = hsv_image[..., 1] * amount
+    output_image = cv2.cvtColor(hsv_image, cv2.COLOR_HSV2BGRA)  # type: ignore
+    return output_image
 
 
 def inpaint_missing(image: np.ndarray) -> np.ndarray:
