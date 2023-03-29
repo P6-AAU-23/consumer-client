@@ -1,7 +1,10 @@
 import cv2 as cv
+import time
 import numpy as np
 
 def RemoveSegmentAct(binImg, segImg):
+
+    timeStamp = time.time()
 
     sizeOfSegImg = segImg.shape
 
@@ -9,5 +12,7 @@ def RemoveSegmentAct(binImg, segImg):
         for rowPx in range(sizeOfSegImg[1]):
             if segImg[colPx, rowPx] == 0:
                 binImg[colPx, rowPx] = 0
+
+    print('Remove Segmentation:' + str(time.time() - timeStamp))
 
     return binImg
