@@ -25,6 +25,7 @@ def test_inpaint_missing_inpaints_missing():
     # Assert
     assert np.array_equal(actual, expected)
 
+
 def test_inpaint_missing_does_not_inpaint_if_no_missing():
     # Arrange
     input = np.ones((100, 100, 3), dtype=np.uint8) * 255
@@ -44,4 +45,3 @@ def test_inpaint_missing_does_not_inpaint_if_no_missing():
 
     # Assert
     assert np.array_equal(actual, input)
-

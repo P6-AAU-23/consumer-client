@@ -96,7 +96,9 @@ def apply_mask(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
 
 def binarize(image: np.ndarray) -> np.ndarray:
     image_grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # type: ignore
-    binary_image = cv2.adaptiveThreshold(image_grey, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 4)  # type: ignore
+    binary_image = cv2.adaptiveThreshold(  # type: ignore
+        image_grey, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 4  # type: ignore
+    )
     binary_image = cv2.medianBlur(binary_image, 3)  # type: ignore
     binary_image = cv2.bitwise_not(binary_image)  # type: ignore
     return binary_image
