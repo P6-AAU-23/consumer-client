@@ -13,8 +13,8 @@ from Tests.testFunctions import GetPath
 
 def RemoveSegmentFromBinaryTest():
     path = GetPath()
-    segPath = path / 'segTest.png'
-    binPath = path / 'binTest.png'
+    segPath = path / 'segTest.jpg'
+    binPath = path / 'binTest.jpg'
 
     seg = cv.imread(str(segPath))
     bin = cv.imread(str(binPath))
