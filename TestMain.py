@@ -1,8 +1,17 @@
+import sys
 from Tests.WholePipelineTest import WholePipelineTest
+from Tests.segmentationTest import segmentationTest
 from Tests.RemoveSegmentFromBinaryTest import RemoveSegmentFromBinaryTest
 
-def TestMain():
-    RemoveSegmentFromBinaryTest()
-    #WholePipelineTest()
+def main():
+    arg = sys.argv[1:]
+    TestMain(arg[0])
 
-TestMain()
+def TestMain(imgName):
+    RemoveSegmentFromBinaryTest()
+    segmentationTest(imgName)
+    WholePipelineTest(imgName)
+
+
+if __name__ == '__main__':
+    main()
