@@ -8,8 +8,11 @@ class Segmentator:
 
     #torchModel = torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet50', pretrained=True)
     #torchModel = torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet101', pretrained=True)
-    torchModel = torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_mobilenet_v3_large', pretrained=True)
-    torchModel.eval()
+    torchModel = None
+
+    def __init__(self):
+        self.torchModel = torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_mobilenet_v3_large', pretrained=True)
+        self.torchModel.eval()
 
     def SegmentAct(self, img):
 
