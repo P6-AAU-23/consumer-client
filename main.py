@@ -15,7 +15,6 @@ def main():
         exit()
     while True:
         ret, image = cap.read()
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)  # type: ignore
         if not ret:
             print("Can't receive frame (stream end?). Exiting ...")
             break
