@@ -1,5 +1,6 @@
 from CornerProvider import CornerProvider
 from typing import Dict, Tuple
+from Inpainter import Inpainter
 from helper import distance
 import numpy as np
 import cv2
@@ -9,14 +10,15 @@ from enum import Enum
 class Pipeline:
     def __init__(self):
         self.corner_provider = CornerProvider("Corner Selection Preview")
+        self.inpainter = Inpainter()
 
     def process(self, image):
         self.corner_provider.update(image)
         corners = self.corner_provider.get_corners()
         whiteboard = quadrilateral_to_rectangle(image, corners)
-        whiteboard = remove_foreground(whiteboard)
+        foreground_mask = remove_foreground(whiteboard)
         whiteboard = idealize_colors(whiteboard, Idealize_colors_mode.MASKING)
-        whiteboard = inpaint_missing(whiteboard)
+        whiteboard = self.inpainter.inpaint_missing(whiteboard, foreground_mask)
         return whiteboard
 
 
@@ -48,7 +50,8 @@ def quadrilateral_to_rectangle(
 
 
 def remove_foreground(image: np.ndarray) -> np.ndarray:
-    return image
+    height, width, _ = image.shape
+    return np.ones((height, width, 1), dtype=np.uint8) * 255
 
 
 class Idealize_colors_mode(Enum):
@@ -105,7 +108,3 @@ def scale_saturation(image: np.ndarray, amount: float) -> np.ndarray:
     hsv_image[..., 1] = hsv_image[..., 1] * amount
     output_image = cv2.cvtColor(hsv_image, cv2.COLOR_HSV2BGRA)  # type: ignore
     return output_image
-
-
-def inpaint_missing(image: np.ndarray) -> np.ndarray:
-    return image
