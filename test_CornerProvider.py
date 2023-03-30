@@ -42,3 +42,30 @@ def test_update(cp_initialized):
     assert np.any(preview_image[0:10, 189:200])  # upper_right
     assert np.any(preview_image[89:100, 189:200])  # lower_right
     assert np.any(preview_image[89:100, 0:10])  # lower_left
+
+
+# test for bug #21
+def test_corner_outside_of_image_not_being_moved_resets_all_corners(cp_initialized):
+    image = np.zeros((100, 200, 3), dtype=np.uint8)
+    cp_initialized.corners["upper_left"] = (-1, -1)
+    cp_initialized.update(image)
+    corners = cp_initialized.get_corners()
+    assert corners["upper_left"] == (0, 0)
+    assert corners["upper_right"] == (199, 0)
+    assert corners["lower_right"] == (199, 99)
+    assert corners["lower_left"] == (0, 99)
+
+
+# test for bug #21
+def test_corner_outside_of_image_being_moved_does_not_resets_all_corners(
+    cp_initialized,
+):
+    image = np.zeros((100, 200, 3), dtype=np.uint8)
+    cp_initialized._move_this = "upper_left"
+    cp_initialized.corners["upper_left"] = (-1, -1)
+    cp_initialized.update(image)
+    corners = cp_initialized.get_corners()
+    assert corners["upper_left"] == (-1, -1)
+    assert corners["upper_right"] == (199, 0)
+    assert corners["lower_right"] == (199, 99)
+    assert corners["lower_left"] == (0, 99)
