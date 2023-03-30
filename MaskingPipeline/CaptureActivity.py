@@ -1,13 +1,18 @@
-import cv2 as cv
 import numpy as np
 import time
-import torch
 
-from MaskingPipeline.Pipeline import Binarization, Changes, Colourization, Segmentation, UpdateWhiteboard, SegmentationRemoval
+
+from MaskingPipeline.Pipeline import (
+    Binarization,
+    Changes,
+    Colourization,
+    Segmentation,
+    UpdateWhiteboard,
+    SegmentationRemoval,
+)
 
 
 class CaptureActivity:
-        
     VirtualWhiteboard = None
     Seg = Segmentation.Segmentator()
 
@@ -18,13 +23,15 @@ class CaptureActivity:
         timestamp = time.time()
 
         origImg = img
-        
+
         binImg = Binarization.BinarizeAct(img)
         segImg = self.Seg.SegmentAct(img)
 
         removedSegBinImg = SegmentationRemoval.RemoveSegmentAct(binImg, segImg)
         TrackedChangesMask = Changes.ChangesAct(binImg, segImg)
         ColouredChanges = Colourization.ColouringAct(TrackedChangesMask, origImg)
-        self.VirtualWhiteboard = UpdateWhiteboard.UpdateWhiteboardAct(ColouredChanges, self.VirtualWhiteboard)
+        self.VirtualWhiteboard = UpdateWhiteboard.UpdateWhiteboardAct(
+            ColouredChanges, self.VirtualWhiteboard
+        )
 
-        print((time.time()-timestamp))
+        print((time.time() - timestamp))
