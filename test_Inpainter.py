@@ -35,7 +35,6 @@ def test_inpaint_missing_does_not_inpaint_if_no_missing():
     cv2.rectangle(last_image, (25, 25), (74, 74), (0, 255, 0), -1)  # type: ignore
 
     mask = np.ones((100, 100, 1), dtype=np.uint8) * 255
-    cv2.rectangle(mask, (25, 25), (74, 74), 0, -1)  # type: ignore
 
     inpainter = Inpainter()
     inpainter._last_image = last_image
