@@ -51,7 +51,7 @@ class CornerProvider:
         :param image: The image to be updated.
         :return: The modified image (preview_image) with corner points and lines drawn.
         """
-        if not self._corners_are_on_image(image):
+        if not self._corners_are_on_image(image) and self._move_this == "None":
             self._initialize_corners(image)
         preview_image = image.copy()
         self._draw_preview(preview_image)
