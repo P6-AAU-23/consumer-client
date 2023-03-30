@@ -1,6 +1,7 @@
 from CornerProvider import CornerProvider
 from typing import Dict, Tuple
 from Inpainter import Inpainter
+from MaskingPipeline.Pipeline.Segmentation import Segmentator
 from helper import distance
 import numpy as np
 import cv2
@@ -11,12 +12,13 @@ class Pipeline:
     def __init__(self):
         self.corner_provider = CornerProvider("Corner Selection Preview")
         self.inpainter = Inpainter()
+        self.foreground_remover = Segmentator()
 
     def process(self, image):
         self.corner_provider.update(image)
         corners = self.corner_provider.get_corners()
         whiteboard = quadrilateral_to_rectangle(image, corners)
-        foreground_mask = remove_foreground(whiteboard)
+        foreground_mask = self.foreground_remover.SegmentAct(whiteboard)
         whiteboard = idealize_colors(whiteboard, Idealize_colors_mode.MASKING)
         whiteboard = self.inpainter.inpaint_missing(whiteboard, foreground_mask)
         return whiteboard
