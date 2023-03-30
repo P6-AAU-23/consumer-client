@@ -4,7 +4,7 @@ from torchvision import transforms
 import time
 
 
-class Segmentator:
+class Segmentor:
     # torchModel = torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet50', pretrained=True)
     # torchModel = torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet101', pretrained=True)
     torchModel = None
@@ -44,8 +44,8 @@ class Segmentator:
 
         predictionInNumpy = outputPredictions.byte().cpu().numpy()
 
-        Mask = cv.inRange(predictionInNumpy, 0, 0)
+        mask = cv.inRange(predictionInNumpy, 0, 0)
 
         print("Segmentation:" + str((time.time() - timeStamp)))
 
-        return Mask
+        return mask
