@@ -1,7 +1,7 @@
 from CornerProvider import CornerProvider
 from typing import Dict, Tuple
 from Inpainter import Inpainter
-from MaskingPipeline.Pipeline.Segmentation import Segmentator
+from MaskingPipeline.Pipeline.Segmentation import Segmentor
 from helper import distance
 import numpy as np
 import cv2
@@ -12,7 +12,7 @@ class Pipeline:
     def __init__(self):
         self.corner_provider = CornerProvider("Corner Selection Preview")
         self.inpainter = Inpainter()
-        self.foreground_remover = Segmentator()
+        self.foreground_remover = Segmentor()
 
     def process(self, image):
         self.corner_provider.update(image)
