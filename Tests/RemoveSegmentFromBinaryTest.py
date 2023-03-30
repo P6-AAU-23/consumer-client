@@ -4,8 +4,8 @@ import sys
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 sys.path.append(PROJECT_ROOT)
-from MaskingPipeline.Pipeline.SegmentationRemoval import RemoveSegmentAct
-from Tests.testFunctions import GetPath
+from MaskingPipeline.Pipeline.SegmentationRemoval import RemoveSegmentAct  # noqa: E402
+from Tests.testFunctions import GetPath  # noqa: E402
 
 
 def RemoveSegmentFromBinaryTest():

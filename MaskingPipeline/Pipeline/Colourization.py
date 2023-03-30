@@ -1,4 +1,3 @@
-from Tests.testFunctions import CheckIfImageIsPassed
 import cv2 as cv
 
 

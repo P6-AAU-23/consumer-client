@@ -1,4 +1,3 @@
-from Tests import testFunctions
 import cv2 as cv
 import time
 

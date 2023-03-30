@@ -4,8 +4,8 @@ import sys
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 sys.path.append(PROJECT_ROOT)
-from MaskingPipeline.CaptureActivity import CaptureActivity
-from Tests.testFunctions import GetPath
+from MaskingPipeline.CaptureActivity import CaptureActivity  # noqa: E402
+from Tests.testFunctions import GetPath  # noqa: E402
 
 
 def main():
