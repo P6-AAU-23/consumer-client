@@ -20,7 +20,7 @@ from Pipeline import Pipeline
 import cv2
 gc.enable()
 image = cv2.imread("resources/benchmark{i}.jpg")
-pipeline = Pipeline(0)
+pipeline = Pipeline()
                 """,
             number=SCALE,
         )
