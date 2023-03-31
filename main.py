@@ -13,8 +13,8 @@ def main():
     relative_path = Path("Tests/Results/")
     image_path = PROJECT_ROOT / relative_path
     parser = argparse.ArgumentParser()
-    parser.add_argument("video_capture_address")
-    parser.add_argument("final_whiteboard_image_path", nargs="?", default=image_path)
+    parser.add_argument("--video_capture_address", nargs="?", default=0)
+    parser.add_argument("--saved_path", nargs="?", default=image_path)
     args = parser.parse_args()
     cap = cv2.VideoCapture(args.video_capture_address)  # type: ignore
 
@@ -31,7 +31,7 @@ def main():
         whiteboard = pipeline.process(image)
         cv2.imshow("preview", whiteboard)  # type: ignore
         if cv2.waitKey(1) == ord("q"):  # type: ignore
-            path = Path(args.final_whiteboard_image_path) / 'whiteboard.jpg'
+            path = Path(args.saved_path) / 'whiteboard.jpg'
             print(path)
             cv2.imwrite(str(path), whiteboard)
             break
