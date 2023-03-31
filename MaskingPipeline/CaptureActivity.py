@@ -27,7 +27,7 @@ class CaptureActivity:
         binImg = Binarization.BinarizeAct(img)
         segImg = self.Seg.SegmentAct(img)
 
-        removedSegBinImg = SegmentationRemoval.RemoveSegmentAct(binImg, segImg)  # noqa: 841
+        removedSegBinImg = SegmentationRemoval.RemoveSegmentAct(binImg, segImg) # noqa: 841
         TrackedChangesMask = Changes.ChangesAct(binImg, segImg)
         ColouredChanges = Colourization.ColouringAct(TrackedChangesMask, origImg)
         self.VirtualWhiteboard = UpdateWhiteboard.UpdateWhiteboardAct(
