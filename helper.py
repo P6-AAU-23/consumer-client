@@ -1,6 +1,7 @@
 from typing import Tuple
 import numpy as np
 import os
+import cv2
 
 
 def distance(pt1: Tuple[float, float], pt2: Tuple[float, float]) -> float:
@@ -22,3 +23,10 @@ def uniquifyFileName(path):
             counter += 1
 
         return path
+
+def dilate_black_regions(binary_mask, kernel_size=(3, 3), iterations=1):
+    inverted_mask = cv2.bitwise_not(binary_mask)  # type: ignore
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernel_size)  # type: ignore
+    dilated_inverted_mask = cv2.dilate(inverted_mask, kernel, iterations=iterations)  # type: ignore
+    dilated_mask = cv2.bitwise_not(dilated_inverted_mask)  # type: ignore
+    return dilated_mask

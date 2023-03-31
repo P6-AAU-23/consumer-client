@@ -3,9 +3,11 @@ from Tests.WholePipelineTest import WholePipelineTest
 from Tests.segmentationTest import segmentationTest
 from Tests.RemoveSegmentFromBinaryTest import RemoveSegmentFromBinaryTest
 
+
 def main():
     arg = sys.argv[1:]
     TestMain(arg[0])
+
 
 def TestMain(imgName):
     RemoveSegmentFromBinaryTest()
@@ -13,5 +15,5 @@ def TestMain(imgName):
     WholePipelineTest(imgName)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
