@@ -17,7 +17,6 @@ def main():
     #     exit()
     while True:
         image = cap.read()
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)  # type: ignore
         # TODO: this should probably implemented for the BufferlessVideoCapture, and uncommented
         # if not ret:
         #     print("Can't receive frame (stream end?). Exiting ...")
