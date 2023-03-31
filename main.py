@@ -3,7 +3,6 @@ import argparse
 import os
 from pathlib import Path
 from helper import uniquifyFileName
-from Tests.testFunctions import GetPath
 from BufferlessVideoCapture import BufferlessVideoCapture
 from Pipeline import Pipeline
 
@@ -32,7 +31,7 @@ def main():
         whiteboard = pipeline.process(image)
         cv2.imshow("preview", whiteboard)  # type: ignore
         if cv2.waitKey(1) == ord("q"):  # type: ignore
-            path = Path(args.saved_path) / 'whiteboard.jpg'
+            path = Path(args.saved_path) / "whiteboard.jpg"
             path = uniquifyFileName(path)
             cv2.imwrite(str(path), whiteboard)
             break
@@ -41,6 +40,7 @@ def main():
     # cap.release()
 
     cv2.destroyAllWindows()  # type: ignore
+
 
 if __name__ == "__main__":
     main()

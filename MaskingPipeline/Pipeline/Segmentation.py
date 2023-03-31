@@ -16,7 +16,6 @@ class Segmentor:
         self.torchModel.eval()
 
     def SegmentAct(self, img):
-
         inputImage = cv.cvtColor(img, cv.COLOR_BGR2RGB)
         preprocess = transforms.Compose(
             [
