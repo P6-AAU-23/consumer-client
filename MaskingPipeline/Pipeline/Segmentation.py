@@ -1,8 +1,6 @@
 import torch
 import cv2 as cv
 from torchvision import transforms
-import time
-
 from helper import dilate_black_regions
 
 
@@ -47,7 +45,5 @@ class Segmentor:
 
         mask = cv.inRange(predictionInNumpy, 0, 0)
         mask = dilate_black_regions(mask, iterations=11)
-
-
 
         return mask
