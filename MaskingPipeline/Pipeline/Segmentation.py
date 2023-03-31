@@ -5,18 +5,18 @@ from helper import dilate_black_regions
 
 
 class Segmentor:
-    # torchModel = torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet50', pretrained=True)
-    # torchModel = torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet101', pretrained=True)
     torchModel = None
 
     def __init__(self):
+        # Alternative models
+        # torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet50', pretrained=True)
+        # torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet101', pretrained=True)
         self.torchModel = torch.hub.load(
             "pytorch/vision:v0.10.0", "deeplabv3_mobilenet_v3_large", pretrained=True
         )
         self.torchModel.eval()
 
     def SegmentAct(self, img):
-
         inputImage = cv.cvtColor(img, cv.COLOR_BGR2RGB)
         preprocess = transforms.Compose(
             [

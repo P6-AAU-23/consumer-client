@@ -1,5 +1,6 @@
 from typing import Tuple
 import numpy as np
+import os
 import cv2
 
 
@@ -12,6 +13,17 @@ def distance(pt1: Tuple[float, float], pt2: Tuple[float, float]) -> float:
     :return: The Euclidean distance between the two points.
     """
     return np.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2)
+
+
+def uniquifyFileName(path):
+    filename, extension = os.path.splitext(path)
+    counter = 1
+
+    while os.path.exists(path):
+        path = filename + " (" + str(counter) + ")" + extension
+        counter += 1
+
+    return path
 
 
 def dilate_black_regions(binary_mask, kernel_size=(3, 3), iterations=1):
