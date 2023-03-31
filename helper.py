@@ -1,5 +1,6 @@
 from typing import Tuple
 import numpy as np
+import cv2
 
 
 def distance(pt1: Tuple[float, float], pt2: Tuple[float, float]) -> float:
@@ -11,3 +12,11 @@ def distance(pt1: Tuple[float, float], pt2: Tuple[float, float]) -> float:
     :return: The Euclidean distance between the two points.
     """
     return np.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2)
+
+
+def dilate_black_regions(binary_mask, kernel_size=(3, 3), iterations=1):
+    inverted_mask = cv2.bitwise_not(binary_mask)  # type: ignore
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernel_size)  # type: ignore
+    dilated_inverted_mask = cv2.dilate(inverted_mask, kernel, iterations=iterations)  # type: ignore
+    dilated_mask = cv2.bitwise_not(dilated_inverted_mask)  # type: ignore
+    return dilated_mask

@@ -1,7 +1,7 @@
 import torch
 import cv2 as cv
 from torchvision import transforms
-import time
+from helper import dilate_black_regions
 
 
 class Segmentor:
@@ -16,7 +16,6 @@ class Segmentor:
         self.torchModel.eval()
 
     def SegmentAct(self, img):
-        timeStamp = time.time()
 
         inputImage = cv.cvtColor(img, cv.COLOR_BGR2RGB)
         preprocess = transforms.Compose(
@@ -45,7 +44,6 @@ class Segmentor:
         predictionInNumpy = outputPredictions.byte().cpu().numpy()
 
         mask = cv.inRange(predictionInNumpy, 0, 0)
-
-        print("Segmentation:" + str((time.time() - timeStamp)))
+        mask = dilate_black_regions(mask, iterations=11)
 
         return mask
