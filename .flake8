@@ -7,4 +7,4 @@ warn_return_any = True
 warn_no_return = True
 warn_no_yield = True
 warn_untyped_defs = True
-ignore = ANN101
+ignore = ANN101, ANN204
