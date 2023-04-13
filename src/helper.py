@@ -5,17 +5,19 @@ import cv2
 
 
 def distance(pt1: Tuple[float, float], pt2: Tuple[float, float]) -> float:
-    """
-    Calculate the Euclidean distance between two points in 2D space.
+    """Calculate the Euclidean distance between two points in 2D space.
 
-    :param pt1: A tuple representing the first point (x1, y1).
-    :param pt2: A tuple representing the second point (x2, y2).
-    :return: The Euclidean distance between the two points.
+    Args:
+        pt1 (tuple): A tuple representing the first point (x1, y1).
+        pt2 (tuple): A tuple representing the second point (x2, y2).
+
+    Returns:
+        float: The Euclidean distance between the two points.
     """
     return np.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2)
 
 
-def uniquifyFileName(path):
+def uniquify_file_name(path: str) -> str:
     filename, extension = os.path.splitext(path)
     counter = 1
 
@@ -26,7 +28,7 @@ def uniquifyFileName(path):
     return path
 
 
-def dilate_black_regions(binary_mask, kernel_size=(3, 3), iterations=1):
+def dilate_black_regions(binary_mask: np.ndarray, kernel_size: Tuple[int, int] = (3, 3), iterations: int = 1) -> np.ndarray:
     inverted_mask = cv2.bitwise_not(binary_mask)  # type: ignore
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernel_size)  # type: ignore
     dilated_inverted_mask = cv2.dilate(inverted_mask, kernel, iterations=iterations)  # type: ignore

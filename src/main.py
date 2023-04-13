@@ -2,7 +2,7 @@ import cv2
 import argparse
 import os
 from pathlib import Path
-from helper import uniquifyFileName
+from helper import uniquify_file_name
 from BufferlessVideoCapture import BufferlessVideoCapture
 from pipeline.Pipeline import Pipeline
 
@@ -32,7 +32,7 @@ def main():
         cv2.imshow("preview", whiteboard)  # type: ignore
         if cv2.waitKey(1) == ord("q"):  # type: ignore
             path = Path(args.saved_path) / "whiteboard.jpg"
-            path = uniquifyFileName(path)
+            path = uniquify_file_name(path)
             cv2.imwrite(str(path), whiteboard)
             break
 
