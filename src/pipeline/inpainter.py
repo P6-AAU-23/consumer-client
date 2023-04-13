@@ -9,14 +9,19 @@ class Inpainter:
     def inpaint_missing(
         self, image: np.ndarray, missing_mask: np.ndarray
     ) -> np.ndarray:
-        """
-        Inpaints the missing regions in the input image using the provided binary mask,
+        """Inpaints the missing regions in the input image using the provided binary mask,
         and the last image given to this function.
 
-        :param image: A numpy array representing the input image.
-        :param missing_mask: A numpy array representing the binary mask indicating missing regions
-                             (0 for missing regions, non-zero for existing regions).
-        :return: A numpy array representing the inpainted image with missing regions filled.
+        Args:
+            image (np.ndarray): A numpy array representing the input image.
+            missing_mask (np.ndarray): A numpy array representing the binary mask indicating missing regions
+                                       (0 for missing regions, non-zero for existing regions).
+
+        Raises:
+            ValueError: If the input image and missing_mask have different height and width.
+
+        Returns:
+            np.ndarray: A numpy array representing the inpainted image with missing regions filled.
         """
         # If _last_image is not set or input image is different shape from _last_image
         if self._last_image is None or image.shape != self._last_image.shape:
