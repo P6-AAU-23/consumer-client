@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 
 
-def test_warp_quadrilateral_to_rectangle_no_transformation():
+def test_warp_quadrilateral_to_rectangle_no_transformation() -> None:
     """
     Tests the case when the input quadrilateral region is already a rectangle with the same size as the input image.
     In this case, the output should be the same as the input.
@@ -22,7 +22,7 @@ def test_warp_quadrilateral_to_rectangle_no_transformation():
     assert np.array_equal(image, warped_image)
 
 
-def test_quadrilateral_to_rectangle_known_transformation():
+def test_quadrilateral_to_rectangle_known_transformation() -> None:
     """
     Tests the case when the input quadrilateral region is a rectangle within the input image, and the output should be
     that rectangular region. The test creates a 100x100 image with a white 50x50 rectangle centered in it and applies
