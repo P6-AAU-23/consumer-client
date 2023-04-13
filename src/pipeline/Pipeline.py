@@ -18,7 +18,7 @@ class Pipeline:
         self.corner_provider.update(image)
         corners = self.corner_provider.get_corners()
         whiteboard = quadrilateral_to_rectangle(image, corners)
-        foreground_mask = self.foreground_remover.SegmentAct(whiteboard)
+        foreground_mask = self.foreground_remover.segment(whiteboard)
         whiteboard = idealize_colors(whiteboard, Idealize_colors_mode.MASKING)
         whiteboard = self.inpainter.inpaint_missing(whiteboard, foreground_mask)
         return whiteboard
