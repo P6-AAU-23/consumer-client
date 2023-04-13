@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from .CornerProvider import CornerProvider
+from .corner_provider import CornerProvider
 
 
 @pytest.fixture
