@@ -2,7 +2,7 @@ from .CornerProvider import CornerProvider
 from typing import Dict, Tuple
 from .Inpainter import Inpainter
 from .Segmentation import Segmentor
-from helper import distance
+from ..helper import distance
 import numpy as np
 import cv2
 from enum import Enum

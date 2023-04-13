@@ -1,7 +1,7 @@
 import torch
 import cv2 as cv
 from torchvision import transforms
-from helper import dilate_black_regions
+from ..helper import dilate_black_regions
 
 
 class Segmentor:
