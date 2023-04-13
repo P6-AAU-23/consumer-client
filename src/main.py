@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from helper import uniquifyFileName
 from BufferlessVideoCapture import BufferlessVideoCapture
-from Pipeline import Pipeline
+from pipeline.Pipeline import Pipeline
 
 
 def main():

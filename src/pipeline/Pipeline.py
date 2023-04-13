@@ -1,7 +1,7 @@
-from CornerProvider import CornerProvider
+from .CornerProvider import CornerProvider
 from typing import Dict, Tuple
-from Inpainter import Inpainter
-from MaskingPipeline.Pipeline.Segmentation import Segmentor
+from .Inpainter import Inpainter
+from .Segmentation import Segmentor
 from helper import distance
 import numpy as np
 import cv2
