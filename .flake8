@@ -1,3 +1,10 @@
 [flake8]
 max-line-length = 127
 max-complexity = 10
+
+# flake8-annotations configuration
+warn_return_any = True
+warn_no_return = True
+warn_no_yield = True
+warn_untyped_defs = True
+ignore = ANN101
