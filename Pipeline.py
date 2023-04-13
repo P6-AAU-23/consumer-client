@@ -3,6 +3,7 @@ from typing import Dict, Tuple
 from Inpainter import Inpainter
 from MaskingPipeline.Pipeline.Segmentation import Segmentor
 from helper import distance
+from SaveOnWipe import ChangeSavor
 import numpy as np
 import cv2
 from enum import Enum
@@ -13,6 +14,9 @@ class Pipeline:
         self.corner_provider = CornerProvider("Corner Selection Preview")
         self.inpainter = Inpainter()
         self.foreground_remover = Segmentor()
+        self.change_savor = ChangeSavor()
+        #Multi-thread this
+        self.change_savor.func()
 
     def process(self, image):
         self.corner_provider.update(image)
