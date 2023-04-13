@@ -7,11 +7,11 @@ from BufferlessVideoCapture import BufferlessVideoCapture
 from pipeline.Pipeline import Pipeline
 
 
-def main():
-    PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__)))
-    print(PROJECT_ROOT)
+def main() -> None:
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+    print(project_root)
     relative_path = Path("Tests/Results/")
-    image_path = PROJECT_ROOT / relative_path
+    image_path = project_root / relative_path
     parser = argparse.ArgumentParser()
     parser.add_argument("--video_capture_address", nargs="?", default=0)
     parser.add_argument("--saved_path", nargs="?", default=image_path)
