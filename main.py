@@ -8,7 +8,7 @@ from lib.pipeline.pipeline import Pipeline
 
 
 def main() -> None:
-    program_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+    program_root = os.getcwd()
     parser = argparse.ArgumentParser()
     parser.add_argument("--video_capture_address", nargs="?", default=0)
     parser.add_argument("--saved_path", nargs="?", default=program_root)
