@@ -18,7 +18,7 @@
 3. Install [OBS](https://obsproject.com/)
 4. `git clone https://github.com/P6-AAU-23/server`
 5. `cd server && pip install -r requirements.txt`
-6. `docker run -d -p 1935:1935 --net=host --name nginx-rtmp tiangolo/nginx-rtmp`
+6. `docker run -d -p 1935:1935 --name nginx-rtmp tiangolo/nginx-rtmp`
 7. Open OBS, enter File > Settings > Stream
    1. Set service to Custom...
    2. Set server to `rtmp://localhost/live`
