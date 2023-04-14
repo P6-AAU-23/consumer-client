@@ -8,10 +8,9 @@ from lib.pipeline.pipeline import Pipeline
 
 
 def main() -> None:
-    program_root = os.getcwd()
     parser = argparse.ArgumentParser()
     parser.add_argument("--video_capture_address", nargs="?", default=0)
-    parser.add_argument("--saved_path", nargs="?", default=program_root)
+    parser.add_argument("--saved_path", nargs="?", default=os.getcwd())
     args = parser.parse_args()
     cap = BufferlessVideoCapture(args.video_capture_address)  # type: ignore
     pipeline = Pipeline()
