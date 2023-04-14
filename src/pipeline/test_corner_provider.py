@@ -31,7 +31,7 @@ def test_on_corner(cp_initialized: CornerProvider) -> None:
     assert cp_initialized._on_corner(199, 0) == "upper_right"
     assert cp_initialized._on_corner(199, 99) == "lower_right"
     assert cp_initialized._on_corner(0, 99) == "lower_left"
-    assert cp_initialized._on_corner(50, 50) == "None"
+    assert cp_initialized._on_corner(50, 50) is None
 
 
 def test_update(cp_initialized: CornerProvider) -> None:
