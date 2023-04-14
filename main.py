@@ -3,7 +3,7 @@ import argparse
 import os
 from pathlib import Path
 from lib.helper import uniquify_file_name
-from lib.BufferlessVideoCapture import BufferlessVideoCapture
+from lib.bufferless_video_capture import BufferlessVideoCapture
 from lib.pipeline.pipeline import Pipeline
 
 
