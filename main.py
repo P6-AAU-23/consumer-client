@@ -8,13 +8,10 @@ from lib.pipeline.pipeline import Pipeline
 
 
 def main() -> None:
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
-    print(project_root)
-    relative_path = Path("Tests/Results/")
-    image_path = project_root / relative_path
+    program_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
     parser = argparse.ArgumentParser()
     parser.add_argument("--video_capture_address", nargs="?", default=0)
-    parser.add_argument("--saved_path", nargs="?", default=image_path)
+    parser.add_argument("--saved_path", nargs="?", default=program_root)
     args = parser.parse_args()
     cap = BufferlessVideoCapture(args.video_capture_address)  # type: ignore
     pipeline = Pipeline()
