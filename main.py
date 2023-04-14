@@ -2,19 +2,15 @@ import cv2
 import argparse
 import os
 from pathlib import Path
-from helper import uniquifyFileName
-from BufferlessVideoCapture import BufferlessVideoCapture
-from Pipeline import Pipeline
+from lib.helper import uniquify_file_name
+from lib.bufferless_video_capture import BufferlessVideoCapture
+from lib.pipeline.pipeline import Pipeline
 
 
-def main():
-    PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__)))
-    print(PROJECT_ROOT)
-    relative_path = Path("Tests/Results/")
-    image_path = PROJECT_ROOT / relative_path
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--video_capture_address", nargs="?", default=0)
-    parser.add_argument("--saved_path", nargs="?", default=image_path)
+    parser.add_argument("--saved_path", nargs="?", default=os.getcwd())
     args = parser.parse_args()
     cap = BufferlessVideoCapture(args.video_capture_address)  # type: ignore
     pipeline = Pipeline()
@@ -32,7 +28,7 @@ def main():
         cv2.imshow("preview", whiteboard)  # type: ignore
         if cv2.waitKey(1) == ord("q"):  # type: ignore
             path = Path(args.saved_path) / "whiteboard.jpg"
-            path = uniquifyFileName(path)
+            path = uniquify_file_name(path)
             cv2.imwrite(str(path), whiteboard)
             break
 
