@@ -1,5 +1,7 @@
 import timeit
 import cv2
+import sys
+import os
 
 FPS_GOAL = 30
 SCALE = 1000
@@ -8,6 +10,7 @@ RED = "\033[1;31;48m"
 END = "\033[1;37;0m"
 
 if __name__ == "__main__":
+    project_root = os.path.dirname(os.path.abspath(__file__)) + "/.."
     for i in range(3):
         time = timeit.timeit(
             """
@@ -16,10 +19,12 @@ cv2.imshow("benchmark", whiteboard)
 cv2.waitKey(1)
                 """,
             setup=f"""
-from Pipeline import Pipeline
+import sys
+sys.path.append("{project_root}")
+from lib.pipeline.pipeline import Pipeline
 import cv2
 gc.enable()
-image = cv2.imread("resources/benchmark{i}.jpg")
+image = cv2.imread("{project_root}/resources/benchmark{i}.jpg")
 pipeline = Pipeline()
                 """,
             number=SCALE,
