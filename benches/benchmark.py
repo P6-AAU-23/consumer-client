@@ -1,6 +1,5 @@
 import timeit
 import cv2
-import sys
 import os
 
 FPS_GOAL = 30
