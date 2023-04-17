@@ -2,6 +2,9 @@ from typing import Tuple
 import numpy as np
 import os
 import cv2
+from datetime import datetime
+from pathlib import Path
+
 
 
 def distance(pt1: Tuple[float, float], pt2: Tuple[float, float]) -> float:
@@ -13,6 +16,32 @@ def distance(pt1: Tuple[float, float], pt2: Tuple[float, float]) -> float:
     :return: The Euclidean distance between the two points.
     """
     return np.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2)
+
+def writePathWithDateAndTime(name: str, path: Path):
+    """
+    Generates a path with a unique name with the time and date for an image you want to save.
+
+    :param name: Name of the file you want save.
+    :param path: The path to the location you want to save.
+    :return: The full path with unique name and date/time
+    """
+    now = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
+    fullName = name + now + ".jpg"
+    fullPath = path / fullName
+    
+    return str(uniquifyFileName(fullPath))
+
+def writePathWithUniqueName(name: str, path: Path):
+    """
+    Generates a path with a unique name for an image you want to save.
+
+    :param name: Name of the file you want save.
+    :param path: The path to the location you want to save.
+    :return: The full path with unique name
+    """
+    fullName = name + ".jpg"
+    fullPath = path / fullName
+    return str(uniquifyFileName(fullPath))
 
 
 def uniquifyFileName(path):
