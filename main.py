@@ -1,6 +1,7 @@
 import cv2
 import argparse
 import os
+import threading
 from CurrentWhiteboard import CurrentWhiteboard
 from pathlib import Path
 from helper import uniquifyFileName
@@ -18,8 +19,9 @@ def main():
     parser.add_argument("--save_path", nargs="?", default=image_path)
     args = parser.parse_args()
     cap = BufferlessVideoCapture(args.video_capture_address)  # type: ignore
-    pipeline = Pipeline()
-    latestWhiteboard = CurrentWhiteboard()
+    latestWhiteboard = CurrentWhiteboard(Path(args.save_path))
+    pipeline = Pipeline(latestWhiteboard)
+    is_first_run = True
 
     # TODO: this should probably implemented for the BufferlessVideoCapture, and uncommented
     # if not cap.isOpened():
@@ -27,24 +29,29 @@ def main():
     #     exit()
     while True:
         image = cap.read()
+        
 
         # TODO: this should probably implemented for the BufferlessVideoCapture, and uncommented
         # if not ret:
         #     print("Can't receive frame (stream end?). Exiting ...")
         #     break
         latestWhiteboard.setWhiteboard(pipeline.process(image))
+        if is_first_run:
+            pipeline.thread1.start()
         
+        is_first_run = False
+
         cv2.imshow("preview", latestWhiteboard.getWhiteboard())  # type: ignore
         if cv2.waitKey(1) == ord("q"):  # type: ignore
-            path = Path(args.save_path) 
-            #print()
-            #print(path)
-            latestWhiteboard.saveWhiteboard(path, "closing_whiteboard.jpg")
             break
+        if cv2.getWindowProperty("Corner Selection Preview", cv2.WND_PROP_VISIBLE) < 1 or cv2.getWindowProperty("preview", cv2.WND_PROP_VISIBLE) < 1:
+            break
+        
+        
 
     # TODO: this should probably implemented for the BufferlessVideoCapture, and uncommented
-    # cap.release()
-
+    # cap.release() 
+    latestWhiteboard.saveWhiteboard("closing_whiteboard")
     cv2.destroyAllWindows()  # type: ignore
 
 

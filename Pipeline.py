@@ -6,17 +6,21 @@ from helper import distance
 from SaveOnWipe import ChangeSavor
 import numpy as np
 import cv2
+import threading
 from enum import Enum
 
 
 class Pipeline:
-    def __init__(self):
+
+
+    def __init__(self, latestWhiteboard):
         self.corner_provider = CornerProvider("Corner Selection Preview")
         self.inpainter = Inpainter()
         self.foreground_remover = Segmentor()
-        self.change_savor = ChangeSavor()
-        #Multi-thread this
-        self.change_savor.func()
+        self.closing_event = threading.Event()
+        self.change_savor = ChangeSavor(latestWhiteboard)
+        self.thread1 = threading.Thread(target=self.change_savor.func, args=(self.closing_event,))
+
 
     def process(self, image):
         self.corner_provider.update(image)
@@ -27,6 +31,11 @@ class Pipeline:
         whiteboard = self.inpainter.inpaint_missing(whiteboard, foreground_mask)
         return whiteboard
 
+
+    def __del__(self):
+        self.closing_event.set()
+        self.thread1.join()
+        
 
 def quadrilateral_to_rectangle(
     image: np.ndarray, corners: Dict[str, Tuple[int, int]]
