@@ -2,9 +2,9 @@ import cv2
 import argparse
 import os
 from pathlib import Path
-from lib.helper import uniquify_file_name
-from lib.bufferless_video_capture import BufferlessVideoCapture
-from lib.pipeline.pipeline import Pipeline
+from src.helper import uniquify_file_name
+from src.bufferless_video_capture import BufferlessVideoCapture
+from src.pipeline.pipeline import Pipeline
 
 
 def main() -> None:
