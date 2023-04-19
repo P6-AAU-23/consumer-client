@@ -32,21 +32,22 @@ def main():
         # if not ret:
         #     print("Can't receive frame (stream end?). Exiting ...")
         #     break
-        latest_whiteboard.setWhiteboard(pipeline.process(image))
+        latest_whiteboard.set_whiteboard(pipeline.process(image))
         whiteboard_updated.set()
 
-        cv2.imshow("preview", latest_whiteboard.getWhiteboard())  # type: ignore
+        cv2.imshow("preview", latest_whiteboard.get_whiteboard())  # type: ignore
 
-        is_cornerview_closed = cv2.getWindowProperty("Corner Selection Preview", cv2.WND_PROP_VISIBLE) < 1
-        is_preview_closed = cv2.getWindowProperty("preview", cv2.WND_PROP_VISIBLE) < 1
+        
         if cv2.waitKey(1) == ord("q"):  # type: ignore
             break
+        is_cornerview_closed = cv2.getWindowProperty("Corner Selection Preview", cv2.WND_PROP_VISIBLE) < 1
+        is_preview_closed = cv2.getWindowProperty("preview", cv2.WND_PROP_VISIBLE) < 1
         if is_cornerview_closed or is_preview_closed:
             break
 
     # TODO: this should probably implemented for the BufferlessVideoCapture, and uncommented
     # cap.release()
-    latest_whiteboard.saveWhiteboard("closing_whiteboard")
+    latest_whiteboard.save_whiteboard("closing_whiteboard")
     cv2.destroyAllWindows()  # type: ignore
 
 
