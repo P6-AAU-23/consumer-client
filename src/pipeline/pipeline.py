@@ -1,9 +1,10 @@
-from CornerProvider import CornerProvider
+from .corner_provider import CornerProvider
 from typing import Dict, Tuple
-from Inpainter import Inpainter
-from MaskingPipeline.Pipeline.Segmentation import Segmentor
-from helper import distance
+
 from save_on_wipe import ChangeSavor
+from .inpainter import Inpainter
+from .segmenter import Segmentor
+from ..helper import distance
 import numpy as np
 import cv2
 import threading
@@ -21,12 +22,12 @@ class Pipeline:
         self.thread1 = threading.Thread(target=self.change_savor.event_func, args=(self.closing_event, whiteboard_updated,))
         self.thread1.start()
 
-    def process(self, image):
+    def process(self, image: np.ndarray) -> np.ndarray:
         self.corner_provider.update(image)
         corners = self.corner_provider.get_corners()
         whiteboard = quadrilateral_to_rectangle(image, corners)
-        foreground_mask = self.foreground_remover.SegmentAct(whiteboard)
-        whiteboard = idealize_colors(whiteboard, Idealize_colors_mode.MASKING)
+        foreground_mask = self.foreground_remover.segment(whiteboard)
+        whiteboard = idealize_colors(whiteboard, IdealizeColorsMode.MASKING)
         whiteboard = self.inpainter.inpaint_missing(whiteboard, foreground_mask)
         return whiteboard
 
@@ -38,14 +39,18 @@ class Pipeline:
 def quadrilateral_to_rectangle(
     image: np.ndarray, corners: Dict[str, Tuple[int, int]]
 ) -> np.ndarray:
-    """
-    Warps a quadrilateral region in the input image into a rectangular shape using a perspective transformation.
+    """Warps a quadrilateral region in the input image into a rectangular shape using a perspective transformation.
 
-    :param image: A numpy array representing the input image.
-    :param corners: A dictionary containing 4 corner points defining the quadrilateral region in the input image.
-                    The keys should be 'upper_left', 'upper_right', 'lower_right', 'lower_left', and the values are
-                    tuples containing the x and y coordinates (integers) of each corner point.
-    :return: A numpy array representing the output image with the quadrilateral region warped into a rectangular shape.
+    Args:
+        image (np.ndarray): A numpy array representing the input image.
+        corners (Dict[str, Tuple[int, int]]): A dictionary containing 4 corner points defining the quadrilateral
+                                              region in the input image. The keys should be 'upper_left', 'upper_right',
+                                              'lower_right', 'lower_left', and the values are tuples containing the x and
+                                              y coordinates (integers) of each corner point.
+
+    Returns:
+        np.ndarray: A numpy array representing the output image with the quadrilateral region warped into a rectangular
+                    shape.
     """
     width_upper = distance(corners["upper_left"], corners["upper_right"])
     width_lower = distance(corners["lower_left"], corners["lower_right"])
@@ -67,15 +72,15 @@ def remove_foreground(image: np.ndarray) -> np.ndarray:
     return np.ones((height, width, 1), dtype=np.uint8) * 255
 
 
-class Idealize_colors_mode(Enum):
+class IdealizeColorsMode(Enum):
     MASKING = 1
     ASSIGN_EXTREME = 2
 
 
-def idealize_colors(image: np.ndarray, mode: Idealize_colors_mode) -> np.ndarray:
-    if mode == Idealize_colors_mode.MASKING:
+def idealize_colors(image: np.ndarray, mode: IdealizeColorsMode) -> np.ndarray:
+    if mode == IdealizeColorsMode.MASKING:
         return idealize_colors_masking(image)
-    if mode == Idealize_colors_mode.ASSIGN_EXTREME:
+    if mode == IdealizeColorsMode.ASSIGN_EXTREME:
         return idealize_colors_assign_extreme(image)
     else:
         return image

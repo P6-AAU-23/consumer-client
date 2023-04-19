@@ -1,9 +1,9 @@
-from Inpainter import Inpainter
+from .inpainter import Inpainter
 import cv2
 import numpy as np
 
 
-def test_inpaint_missing_inpaints_missing():
+def test_inpaint_missing_inpaints_missing() -> None:
     # Arrange
     input = np.ones((100, 100, 3), dtype=np.uint8) * 255
     cv2.rectangle(input, (25, 25), (74, 74), (255, 0, 0), -1)  # type: ignore
@@ -26,7 +26,7 @@ def test_inpaint_missing_inpaints_missing():
     assert np.array_equal(actual, expected)
 
 
-def test_inpaint_missing_does_not_inpaint_if_no_missing():
+def test_inpaint_missing_does_not_inpaint_if_no_missing() -> None:
     # Arrange
     input = np.ones((100, 100, 3), dtype=np.uint8) * 255
     cv2.rectangle(input, (25, 25), (74, 74), (255, 0, 0), -1)  # type: ignore

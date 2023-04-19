@@ -4,17 +4,15 @@ import os
 import threading
 from current_whiteboard import CurrentWhiteboard
 from pathlib import Path
-from BufferlessVideoCapture import BufferlessVideoCapture
-from Pipeline import Pipeline
+from src.helper import uniquify_file_name
+from src.bufferless_video_capture import BufferlessVideoCapture
+from src.pipeline.pipeline import Pipeline
 
 
-def main():
-    PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__)))
-    relative_path = Path("Tests/Results/")
-    image_path = PROJECT_ROOT / relative_path
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--video_capture_address", nargs="?", default=0)
-    parser.add_argument("--save_path", nargs="?", default=image_path)
+    parser.add_argument("--saved_path", nargs="?", default=os.getcwd())
     args = parser.parse_args()
     cap = BufferlessVideoCapture(args.video_capture_address)  # type: ignore
     latest_whiteboard = CurrentWhiteboard(Path(args.save_path))

@@ -1,23 +1,24 @@
 import torch
 import cv2 as cv
 from torchvision import transforms
-from helper import dilate_black_regions
+from ..helper import dilate_black_regions
+import numpy as np
 
 
 class Segmentor:
-    torchModel = None
+    torch_model = None
 
     def __init__(self):
         # Alternative models
         # torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet50', pretrained=True)
         # torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet101', pretrained=True)
-        self.torchModel = torch.hub.load(
+        self.torch_model = torch.hub.load(
             "pytorch/vision:v0.10.0", "deeplabv3_mobilenet_v3_large", pretrained=True
         )
-        self.torchModel.eval()
+        self.torch_model.eval()
 
-    def SegmentAct(self, img):
-        inputImage = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+    def segment(self, img: np.ndarray) -> np.ndarray:
+        input_image = cv.cvtColor(img, cv.COLOR_BGR2RGB)
         preprocess = transforms.Compose(
             [
                 transforms.ToTensor(),
@@ -27,23 +28,23 @@ class Segmentor:
             ]
         )
 
-        inputTensor = preprocess(inputImage)
-        inputBatch = inputTensor.unsqueeze(
+        input_tensor = preprocess(input_image)
+        input_batch = input_tensor.unsqueeze(
             0
         )  # create a mini-batch as expected by the model
 
         # move the input and model to GPU for speed if available
         if torch.cuda.is_available():
-            inputBatch = inputBatch.to("cuda")
-            self.torchModel.to("cuda")
+            input_batch = input_batch.to("cuda")
+            self.torch_model.to("cuda")
 
         with torch.no_grad():
-            output = self.torchModel(inputBatch)["out"][0]
-        outputPredictions = output.argmax(0)
+            output = self.torch_model(input_batch)["out"][0]
+        output_predictions = output.argmax(0)
 
-        predictionInNumpy = outputPredictions.byte().cpu().numpy()
+        prediction_in_numpy = output_predictions.byte().cpu().numpy()
 
-        mask = cv.inRange(predictionInNumpy, 0, 0)
+        mask = cv.inRange(prediction_in_numpy, 0, 0)
         mask = dilate_black_regions(mask, iterations=11)
 
         return mask
