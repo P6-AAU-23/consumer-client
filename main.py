@@ -2,7 +2,7 @@ import cv2
 import argparse
 import os
 import threading
-from current_whiteboard import CurrentWhiteboard
+from src.current_whiteboard import CurrentWhiteboard
 from pathlib import Path
 from src.helper import uniquify_file_name
 from src.bufferless_video_capture import BufferlessVideoCapture
@@ -15,7 +15,7 @@ def main() -> None:
     parser.add_argument("--saved_path", nargs="?", default=os.getcwd())
     args = parser.parse_args()
     cap = BufferlessVideoCapture(args.video_capture_address)  # type: ignore
-    latest_whiteboard = CurrentWhiteboard(Path(args.save_path))
+    latest_whiteboard = CurrentWhiteboard(Path(args.saved_path))
     whiteboard_updated = threading.Event()
     pipeline = Pipeline(latest_whiteboard, whiteboard_updated)
     # TODO: this should probably implemented for the BufferlessVideoCapture, and uncommented

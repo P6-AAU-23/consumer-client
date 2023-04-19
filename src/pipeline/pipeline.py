@@ -1,7 +1,7 @@
 from .corner_provider import CornerProvider
 from typing import Dict, Tuple
 
-from save_on_wipe import ChangeSavor
+from src.save_on_wipe import ChangeSavor
 from .inpainter import Inpainter
 from .segmenter import Segmentor
 from ..helper import distance
