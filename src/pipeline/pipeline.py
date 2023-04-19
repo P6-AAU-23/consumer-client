@@ -1,14 +1,13 @@
-from .corner_provider import CornerProvider
-from typing import Dict, Tuple
-
-from src.save_on_wipe import ChangeSavor
-from .inpainter import Inpainter
-from .segmenter import Segmentor
-from ..helper import distance
-import numpy as np
 import cv2
 import threading
+import numpy as np
 from enum import Enum
+from ..helper import distance
+from typing import Dict, Tuple
+from .segmenter import Segmentor
+from .inpainter import Inpainter
+from src.save_on_wipe import ChangeSavor
+from .corner_provider import CornerProvider
 
 
 class Pipeline:

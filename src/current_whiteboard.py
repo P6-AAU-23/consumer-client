@@ -1,6 +1,6 @@
 import cv2
-from .helper import write_path_with_unique_name
 from pathlib import Path
+from .helper import write_path_with_unique_name
 
 
 class CurrentWhiteboard:

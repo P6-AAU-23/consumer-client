@@ -1,8 +1,8 @@
 import cv2
 import numpy
 from threading import Event
-from src.current_whiteboard import CurrentWhiteboard
 from .helper import write_path_with_date_and_time
+from src.current_whiteboard import CurrentWhiteboard
 
 
 class ChangeSavor:

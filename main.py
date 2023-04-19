@@ -1,12 +1,11 @@
+import os
 import cv2
 import argparse
-import os
 import threading
-from src.current_whiteboard import CurrentWhiteboard
 from pathlib import Path
-from src.helper import uniquify_file_name
-from src.bufferless_video_capture import BufferlessVideoCapture
 from src.pipeline.pipeline import Pipeline
+from src.current_whiteboard import CurrentWhiteboard
+from src.bufferless_video_capture import BufferlessVideoCapture
 
 
 def main() -> None:
