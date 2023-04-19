@@ -20,14 +20,16 @@ def main():
     args = parser.parse_args()
     cap = BufferlessVideoCapture(args.video_capture_address)  # type: ignore
     latestWhiteboard = CurrentWhiteboard(Path(args.save_path))
-    pipeline = Pipeline(latestWhiteboard)
-    is_first_run = True
+    whiteboard_updated = threading.Event()
+    pipeline = Pipeline(latestWhiteboard, whiteboard_updated)
+    # is_first_run = True
 
     # TODO: this should probably implemented for the BufferlessVideoCapture, and uncommented
     # if not cap.isOpened():
     #     print("Can't open camera")
     #     exit()
     while True:
+        whiteboard_updated.clear()
         image = cap.read()
         
 
@@ -36,10 +38,13 @@ def main():
         #     print("Can't receive frame (stream end?). Exiting ...")
         #     break
         latestWhiteboard.setWhiteboard(pipeline.process(image))
-        if is_first_run:
-            pipeline.thread1.start()
+
+        whiteboard_updated.set()
+
+        # if is_first_run:
+        #     pipeline.thread1.start()
         
-        is_first_run = False
+        # is_first_run = False
 
         cv2.imshow("preview", latestWhiteboard.getWhiteboard())  # type: ignore
         if cv2.waitKey(1) == ord("q"):  # type: ignore

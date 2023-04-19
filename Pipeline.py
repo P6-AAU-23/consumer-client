@@ -13,13 +13,14 @@ from enum import Enum
 class Pipeline:
 
 
-    def __init__(self, latestWhiteboard):
+    def __init__(self, latestWhiteboard, whiteboard_updated):
         self.corner_provider = CornerProvider("Corner Selection Preview")
         self.inpainter = Inpainter()
         self.foreground_remover = Segmentor()
         self.closing_event = threading.Event()
         self.change_savor = ChangeSavor(latestWhiteboard)
-        self.thread1 = threading.Thread(target=self.change_savor.func, args=(self.closing_event,))
+        self.thread1 = threading.Thread(target=self.change_savor.event_func, args=(self.closing_event, whiteboard_updated,))
+        self.thread1.start()
 
 
     def process(self, image):
