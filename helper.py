@@ -28,7 +28,6 @@ def writePathWithDateAndTime(name: str, path: Path):
     now = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
     fullName = name + now + ".jpg"
     fullPath = path / fullName
-    
     return str(uniquifyFileName(fullPath))
 
 def writePathWithUniqueName(name: str, path: Path):
