@@ -37,7 +37,6 @@ def main():
 
         cv2.imshow("preview", latest_whiteboard.get_whiteboard())  # type: ignore
 
-        
         if cv2.waitKey(1) == ord("q"):  # type: ignore
             break
         is_cornerview_closed = cv2.getWindowProperty("Corner Selection Preview", cv2.WND_PROP_VISIBLE) < 1

@@ -14,6 +14,7 @@ class ChangeSavor:
         self.sleep_time = 5
         self.different_rate = 0.035
 
+
     def event_func(self, closing_event: Event, whiteboard_updated: Event) -> None:
         whiteboard_updated.wait()
         self.last_whiteboard = self.current_whiteboard.get_whiteboard()
@@ -22,7 +23,10 @@ class ChangeSavor:
             current_whiteboard = self.current_whiteboard.get_whiteboard()
 
             if self.is_different_size(current_whiteboard):
-                cv2.imwrite(write_path_with_date_and_time("new_corners", self.current_whiteboard.get_path()), self.last_whiteboard)
+                cv2.imwrite(
+                    write_path_with_date_and_time("new_corners", self.current_whiteboard.get_path()), 
+                    self.last_whiteboard
+                )
             else:
                 if self.calculate_difference_rate(current_whiteboard) > self.different_rate:
                     if self.is_removed_rather_than_added(current_whiteboard):

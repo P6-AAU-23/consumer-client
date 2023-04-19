@@ -16,18 +16,20 @@ def distance(pt1: Tuple[float, float], pt2: Tuple[float, float]) -> float:
     """
     return np.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2)
 
+
 def write_path_with_date_and_time(name: str, path: Path):
     """
     Generates a path with a unique name with the time and date for an image you want to save.
 
     :param name: Name of the file you want save.
     :param path: The path to the location you want to save.
-    :return: The full path with unique name and date/time
+    :return: The full path with unique name and date/time.
     """
     now = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
     full_name = name + now + ".jpg"
     full_path = path / full_name
     return str(uniquify_file_name(full_path))
+
 
 def write_path_with_unique_name(name: str, path: Path):
     """
@@ -35,7 +37,7 @@ def write_path_with_unique_name(name: str, path: Path):
 
     :param name: Name of the file you want save.
     :param path: The path to the location you want to save.
-    :return: The full path with unique name
+    :return: The full path with unique name.
     """
     full_name = name + ".jpg"
     full_path = path / full_name
