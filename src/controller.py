@@ -3,7 +3,7 @@ from typing import Any
 from pathlib import Path
 from .pipeline.pipeline import Pipeline
 from .bufferless_video_capture import BufferlessVideoCapture
-from helper import uniquify_file_name
+from .helper import uniquify_file_name
 
 
 class Controller:
