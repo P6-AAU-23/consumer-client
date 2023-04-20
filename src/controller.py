@@ -3,6 +3,7 @@ from typing import Any
 from pathlib import Path
 from .pipeline.pipeline import Pipeline
 from .bufferless_video_capture import BufferlessVideoCapture
+from helper import uniquify_file_name
 
 
 class Controller:
@@ -11,7 +12,7 @@ class Controller:
         self.cap = BufferlessVideoCapture(args.video_capture_address)
         self.pipeline = Pipeline()
 
-    def run(self):
+    def run(self) -> None:
         if not self.cap.is_opened():
             print("Can't open camera")
             exit()
@@ -28,4 +29,3 @@ class Controller:
                 cv2.imwrite(str(path), whiteboard)
                 break
         cv2.destroyAllWindows()  # type: ignore
-

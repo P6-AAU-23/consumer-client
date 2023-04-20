@@ -31,7 +31,7 @@ class BufferlessVideoCapture:
     def is_opened(self) -> bool:
         return self.cap.isOpened()
 
-    def release(self):
+    def release(self) -> None:
         self.stop_event.set()
         self.t.join()
         self.cap.release()

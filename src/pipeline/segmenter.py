@@ -13,8 +13,8 @@ class Segmentor:
         # torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet50', pretrained=True)
         # torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet101', pretrained=True)
         self.torch_model = torch.hub.load(
-            "pytorch/vision:v0.10.0", 
-            "deeplabv3_mobilenet_v3_large", 
+            "pytorch/vision:v0.10.0",
+            "deeplabv3_mobilenet_v3_large",
             weights="DeepLabV3_MobileNet_V3_Large_Weights.DEFAULT"
         )
         self.torch_model.eval()
