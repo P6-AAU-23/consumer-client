@@ -24,7 +24,7 @@
    2. Set server to `rtmp://localhost/live`
    3. Set stream key to anything you like
 8. In OBS Start Streaming
-9. `python3 main.py --video_capture_address rtmp://localhost/live/{stream key}` replacing `{stream key}` with the stream key you set in OBS (this should run the pipeline on your stream)
+9. `python3 server_cli.py --video_capture_address rtmp://localhost/live/{stream key}` replacing `{stream key}` with the stream key you set in OBS (this should run the pipeline on your stream)
 
 ## Usage
 
