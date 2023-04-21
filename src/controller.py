@@ -2,11 +2,9 @@ import cv2
 import threading
 from typing import Any
 from pathlib import Path
-from.pipeline.pipeline import Pipeline
-from.current_whiteboard import CurrentWhiteboard
 from .pipeline.pipeline import Pipeline
+from .current_whiteboard import CurrentWhiteboard
 from .bufferless_video_capture import BufferlessVideoCapture
-from .helper import uniquify_file_name
 
 
 class Controller:
@@ -37,7 +35,7 @@ class Controller:
             is_preview_closed = cv2.getWindowProperty("preview", cv2.WND_PROP_VISIBLE) < 1
             if is_cornerview_closed or is_preview_closed:
                 break
-        latest_whiteboard.save_whiteboard("closing_whiteboard")
+        self.latest_whiteboard.save_whiteboard("closing_whiteboard")
         cv2.destroyAllWindows()  # type: ignore
 
         cv2.destroyAllWindows()  # type: ignore
