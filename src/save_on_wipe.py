@@ -39,7 +39,6 @@ class ChangeSavor:
                     full_wipe_img = None
             last_whiteboard = current_whiteboard
 
-
     def is_different_size(self, cur_whiteboard: cv2.Mat, last_whiteboard: cv2.Mat) -> bool:
         cur_width = cur_whiteboard.shape[0]
         cur_height = cur_whiteboard.shape[1]
@@ -50,7 +49,6 @@ class ChangeSavor:
             return True
         else:
             return False
-
 
     def calculate_difference_rate(self, whiteboard1: cv2.Mat, whiteboard2: cv2.Mat) -> float:
         diff = cv2.absdiff(whiteboard2, whiteboard1)
@@ -63,11 +61,9 @@ class ChangeSavor:
         difference_measure = diff_on_pixels / total_pixels
         return difference_measure
 
-
     def is_removed_rather_than_added(self, cur_whiteboard: cv2.Mat, last_whiteboard: cv2.Mat) -> bool:
         num_white_last = numpy.sum(last_whiteboard == 255)
         num_white_cur = numpy.sum(cur_whiteboard == 255)
-        
 
         if num_white_cur > num_white_last:
             return True
