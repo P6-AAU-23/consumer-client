@@ -20,7 +20,7 @@ cv2.waitKey(1)
             setup=f"""
 import sys
 sys.path.append("{project_root}")
-from lib.pipeline.pipeline import Pipeline
+from src.pipeline.pipeline import Pipeline
 import cv2
 gc.enable()
 image = cv2.imread("{project_root}/resources/benchmark{i}.jpg")
