@@ -42,8 +42,8 @@ def write_path_with_unique_name(name: str, path: Path) -> str:
             name: Name of the file you want save.
             path: The path to the location you want to save.
 
-        Returns: 
-            str: The full path with unique name
+        Returns:
+            str: String of path with unique name
     """
     full_name = name + ".jpg"
     full_path = path / full_name

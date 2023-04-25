@@ -6,20 +6,15 @@ from ..helper import distance
 from typing import Dict, Tuple
 from .segmenter import Segmentor
 from .inpainter import Inpainter
-from src.save_on_wipe import ChangeSavor
 from .corner_provider import CornerProvider
 
 
 class Pipeline:
 
-    def __init__(self, latest_whiteboard: cv2.Mat, whiteboard_updated: threading.Event):
+    def __init__(self, latest_whiteboard: cv2.Mat):
         self.corner_provider = CornerProvider("Corner Selection Preview")
         self.inpainter = Inpainter()
         self.foreground_remover = Segmentor()
-        self.closing_event = threading.Event()
-        self.change_savor = ChangeSavor(latest_whiteboard)
-        self.thread1 = threading.Thread(target=self.change_savor.save_on_wipe, args=(self.closing_event, whiteboard_updated,))
-        self.thread1.start()
 
 
     def process(self, image: np.ndarray) -> np.ndarray:
@@ -30,10 +25,6 @@ class Pipeline:
         whiteboard = idealize_colors(whiteboard, IdealizeColorsMode.MASKING)
         whiteboard = self.inpainter.inpaint_missing(whiteboard, foreground_mask)
         return whiteboard
-
-    def __del__(self):
-        self.closing_event.set()
-        self.thread1.join()
 
 
 def quadrilateral_to_rectangle(
