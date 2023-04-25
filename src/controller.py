@@ -38,6 +38,7 @@ class Controller:
             is_preview_closed = cv2.getWindowProperty("preview", cv2.WND_PROP_VISIBLE) < 1
             if is_cornerview_closed or is_preview_closed:
                 break
+
         self.latest_whiteboard.save_whiteboard("closing_whiteboard")
         cv2.destroyAllWindows()  # type: ignore
 
