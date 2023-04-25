@@ -18,7 +18,7 @@ class Pipeline:
         self.foreground_remover = Segmentor()
         self.closing_event = threading.Event()
         self.change_savor = ChangeSavor(latest_whiteboard)
-        self.thread1 = threading.Thread(target=self.change_savor.event_func, args=(self.closing_event, whiteboard_updated,))
+        self.thread1 = threading.Thread(target=self.change_savor.save_on_wipe, args=(self.closing_event, whiteboard_updated,))
         self.thread1.start()
 
     def process(self, image: np.ndarray) -> np.ndarray:

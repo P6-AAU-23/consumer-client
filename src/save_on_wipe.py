@@ -12,7 +12,7 @@ class ChangeSavor:
         self.sleep_time = 5
         self.different_rate = 0.004
 
-    def event_func(self, closing_event: Event, whiteboard_updated: Event) -> None:
+    def save_on_wipe(self, closing_event: Event, whiteboard_updated: Event) -> None:
         whiteboard_updated.wait()
         last_whiteboard = self.current_whiteboard.get_whiteboard()
         while not closing_event.is_set():
