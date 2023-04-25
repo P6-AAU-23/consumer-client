@@ -10,7 +10,7 @@ from .corner_provider import CornerProvider
 
 class Pipeline:
 
-    def __init__(self, latest_whiteboard: cv2.Mat):
+    def __init__(self):
         self.corner_provider = CornerProvider("Corner Selection Preview")
         self.inpainter = Inpainter()
         self.foreground_remover = Segmentor()
