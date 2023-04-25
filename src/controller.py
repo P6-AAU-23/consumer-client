@@ -11,7 +11,7 @@ class Controller:
         self.args = args
         self.cap = BufferlessVideoCapture(args.video_capture_address)
         self.latest_whiteboard = CurrentWhiteboard(Path(args.saved_path))
-        self.pipeline = Pipeline(self.latest_whiteboard)
+        self.pipeline = Pipeline()
 
     def run(self) -> None:
         if not self.cap.is_opened():
@@ -27,9 +27,11 @@ class Controller:
 
             cv2.imshow("preview", self.latest_whiteboard.get_whiteboard())  # type: ignore
 
-            if cv2.waitKey(1) == ord("q"):  # type: ignore
+            pressed_key = cv2.waitKey(1)
+
+            if pressed_key == ord("q"):  # type: ignore
                 break
-            if cv2.waitKey(1) == ord("p"):  # type: ignore
+            if pressed_key == ord("p"):  # type: ignore
                 self.latest_whiteboard.save_whiteboard("whiteboard")
 
             is_cornerview_closed = cv2.getWindowProperty("Corner Selection Preview", cv2.WND_PROP_VISIBLE) < 1
