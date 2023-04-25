@@ -1,5 +1,4 @@
 import cv2
-import threading
 import numpy as np
 from enum import Enum
 from ..helper import distance
@@ -15,7 +14,6 @@ class Pipeline:
         self.corner_provider = CornerProvider("Corner Selection Preview")
         self.inpainter = Inpainter()
         self.foreground_remover = Segmentor()
-
 
     def process(self, image: np.ndarray) -> np.ndarray:
         self.corner_provider.update(image)
