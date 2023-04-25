@@ -1,7 +1,7 @@
 import cv2
 import argparse
 import os
-from CurrentWhiteboard import CurrentWhiteboard
+from src.current_whiteboard import CurrentWhiteboard
 from pathlib import Path
 from helper import uniquifyFileName
 from BufferlessVideoCapture import BufferlessVideoCapture
