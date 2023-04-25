@@ -35,6 +35,7 @@ def write_path_with_date_and_time(name: str, path: Path) -> str:
     return str(uniquify_file_name(full_path))
 
 
+
 def write_path_with_unique_name(name: str, path: Path) -> str:
     """Generates a path with a unique name for an image you want to save.
 
@@ -50,15 +51,7 @@ def write_path_with_unique_name(name: str, path: Path) -> str:
     return str(uniquify_file_name(full_path))
 
 
-def uniquify_file_name(path: Path) -> Path:
-    """Generates a unique name for a path with a number, for files with same name i.e. img(1).jpg
-
-    Args:
-        path: full path with a name of the file.
-
-    Returns:
-        The full path with unique name
-    """
+def uniquify_file_name(path: str) -> str:
     filename, extension = os.path.splitext(path)
     counter = 1
 
