@@ -21,6 +21,7 @@ class Pipeline:
         self.thread1 = threading.Thread(target=self.change_savor.save_on_wipe, args=(self.closing_event, whiteboard_updated,))
         self.thread1.start()
 
+
     def process(self, image: np.ndarray) -> np.ndarray:
         self.corner_provider.update(image)
         corners = self.corner_provider.get_corners()

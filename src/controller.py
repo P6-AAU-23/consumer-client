@@ -12,8 +12,7 @@ class Controller:
         self.args = args
         self.cap = BufferlessVideoCapture(args.video_capture_address)
         self.latest_whiteboard = CurrentWhiteboard(Path(args.saved_path))
-        self.whiteboard_updated = threading.Event()
-        self.pipeline = Pipeline(self.latest_whiteboard, self.whiteboard_updated)
+        self.pipeline = Pipeline(self.latest_whiteboard)
 
     def run(self) -> None:
         if not self.cap.is_opened():
@@ -26,12 +25,12 @@ class Controller:
                 print("Can't receive frame (stream end?). Exiting ...")
                 break
             self.latest_whiteboard.set_whiteboard(self.pipeline.process(image))
-            self.whiteboard_updated.set()
-            whiteboard = self.pipeline.process(image)
+
             cv2.imshow("preview", whiteboard)  # type: ignore
+
             if cv2.waitKey(1) == ord("q"):  # type: ignore
                 break
-            if cv2.waitKey(1) == ord("p"):
+            if cv2.waitKey(1) == ord("p"):  # type: ignore
                 self.latest_whiteboard.save_whiteboard("whiteboard")
 
             is_cornerview_closed = cv2.getWindowProperty("Corner Selection Preview", cv2.WND_PROP_VISIBLE) < 1
@@ -41,4 +40,3 @@ class Controller:
         self.latest_whiteboard.save_whiteboard("closing_whiteboard")
         cv2.destroyAllWindows()  # type: ignore
 
-        cv2.destroyAllWindows()  # type: ignore
