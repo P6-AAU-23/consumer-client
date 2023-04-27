@@ -9,7 +9,7 @@ from .helper import uniquify_file_name
 class Controller:
     def __init__(self, args: Any):
         self.args = args
-        self.cap = BufferlessVideoCapture(args.video_capture_address)
+        self.cap = BufferlessVideoCapture(self.try_int_to_string(args.video_capture_address))
         self.pipeline = Pipeline()
 
     def run(self) -> None:
@@ -29,3 +29,10 @@ class Controller:
                 cv2.imwrite(str(path), whiteboard)
                 break
         cv2.destroyAllWindows()  # type: ignore
+
+
+    def try_int_to_string(self, s):
+        try: 
+            return int(s)
+        except:
+            return s
