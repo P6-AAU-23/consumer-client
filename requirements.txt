@@ -1,3 +1,4 @@
+attrdict3==2.0.2
 numpy==1.24.2
 torch==2.0.0
 torchvision==0.15.1
@@ -11,4 +12,3 @@ flake8-annotations==3.0.0
 darglint==1.8.1
 flake8-module-name==0.2.0
 Gooey==1.0.8.1
-attrdict3==2.0.2
