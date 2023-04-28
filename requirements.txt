@@ -10,3 +10,4 @@ pep8-naming==0.13.2
 flake8-annotations==3.0.0
 darglint==1.8.1
 flake8-module-name==0.2.0
+Gooey==1.0.8.1
