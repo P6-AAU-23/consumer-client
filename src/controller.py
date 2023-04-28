@@ -42,5 +42,3 @@ class Controller:
 
         self.latest_whiteboard.save_whiteboard("closing_whiteboard")
         cv2.destroyAllWindows()  # type: ignore
-
-    
