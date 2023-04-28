@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from enum import Enum
+
 from ..helper import distance
 from typing import Dict, Tuple
 from .segmenter import Segmentor
@@ -14,6 +15,7 @@ class Pipeline:
         self.corner_provider = CornerProvider("Corner Selection Preview")
         self.inpainter = Inpainter()
         self.foreground_remover = Segmentor()
+        self.cs = ChangeSuppressor(0.005)
 
     def process(self, image: np.ndarray) -> np.ndarray:
         self.corner_provider.update(image)
@@ -22,6 +24,7 @@ class Pipeline:
         foreground_mask = self.foreground_remover.segment(whiteboard)
         whiteboard = idealize_colors(whiteboard, IdealizeColorsMode.MASKING)
         whiteboard = self.inpainter.inpaint_missing(whiteboard, foreground_mask)
+        whiteboard = self.cs.suppress(whiteboard)
         return whiteboard
 
 
@@ -117,3 +120,29 @@ def scale_saturation(image: np.ndarray, amount: float) -> np.ndarray:
     hsv_image[..., 1] = hsv_image[..., 1] * amount
     output_image = cv2.cvtColor(hsv_image, cv2.COLOR_HSV2BGRA)  # type: ignore
     return output_image
+
+
+class ChangeSuppressor :
+    def __init__(self, sensitivity: float) -> None:
+        assert 0 <= sensitivity and sensitivity <= 1
+        self.sensitivity = sensitivity
+        # Initialize last_image to a 10x10 white image
+        self._last_significant_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
+
+    def suppress(self, image: np.ndarray):
+        ratio = self._size(self._last_significant_image) / self._size(image)
+        relative_difference = abs(self._fullness(self._last_significant_image) - (ratio * self._fullness(image)))
+        threshold = self.sensitivity * self._size(self._last_significant_image)
+        if threshold < relative_difference:
+            self._last_significant_image = image
+        return self._last_significant_image
+
+    @staticmethod
+    def _fullness(image: np.ndarray) -> int:
+        binary_image = binarize(image)
+        return np.count_nonzero(binary_image == 255)
+
+    @staticmethod
+    def _size(image: np.ndarray) -> int:
+        height, width, _ = image.shape
+        return height * width
