@@ -93,7 +93,7 @@ def list_ports() -> list[str]:
         dev_port +=1
     return working_ports
 
-def try_int_to_string(self, s):
+def try_int_to_string(s):
         try: 
             return int(s)
         except:

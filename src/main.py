@@ -27,7 +27,6 @@ def parse_args(cam_ports):
     group.add_argument(
                         "--ports",
                         choices=cam_ports,
-                        default=cam_ports[0],
                         dest="video_capture_address",
                         help="The port for your camera or webcam address"
                         )
