@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9"]
+        python-version: ["3.10"]
 
     steps:
       - uses: actions/checkout@v3
@@ -20,12 +20,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 pytest
-          sudo apt-get update
-          sudo apt-get install libunwind-dev
-          sudo apt-get install -y dpkg-dev build-essential python3-dev freeglut3-dev libgl1-mesa-dev libglu1-mesa-dev libgstreamer-plugins-base1.0-dev libgtk-3-dev libjpeg-dev libnotify-dev libpng-dev libsdl2-dev libsm-dev libtiff-dev libwebkit2gtk-4.0-dev libxtst-dev
-          pip install attrdict3
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f cli_requirements.txt ]; then pip install -r cli_requirements.txt; fi
       - name: Lint with flake8
         run: |
           flake8 . --count --statistics
