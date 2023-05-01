@@ -4,12 +4,13 @@ from pathlib import Path
 from .pipeline.pipeline import Pipeline
 from .current_whiteboard import CurrentWhiteboard
 from .bufferless_video_capture import BufferlessVideoCapture
+from .helper import try_int_to_string
 
 
 class Controller:
     def __init__(self, args: Any):
         self.args = args
-        self.cap = BufferlessVideoCapture(args.video_capture_address)
+        self.cap = BufferlessVideoCapture(try_int_to_string(args.video_capture_address))
         self.latest_whiteboard = CurrentWhiteboard(Path(args.saved_path))
         self.pipeline = Pipeline()
 

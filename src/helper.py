@@ -67,3 +67,33 @@ def dilate_black_regions(binary_mask: np.ndarray, kernel_size: Tuple[int, int] =
     dilated_inverted_mask = cv2.dilate(inverted_mask, kernel, iterations=iterations)  # type: ignore
     dilated_mask = cv2.bitwise_not(dilated_inverted_mask)  # type: ignore
     return dilated_mask
+
+
+def list_ports() -> list[str]:
+
+    dev_port = 0
+    working_ports = []
+    available_ports = []
+
+    i = 0
+    while i <= 10:  # looking through 10 ports
+        camera = cv2.VideoCapture(dev_port)
+        if camera.isOpened():
+            i = 0  # if we find a port, the counter is reset to look through 10 more ports
+            is_reading, img = camera.read()
+
+            if is_reading:
+                working_ports.append(str(dev_port))
+            else:
+                available_ports.append(str(dev_port))
+
+        i += 1
+        dev_port += 1
+    return working_ports
+
+
+def try_int_to_string(s: str) -> str | int:
+    try:
+        return int(s)
+    except ValueError:
+        return s
