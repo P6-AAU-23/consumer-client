@@ -1,16 +1,7 @@
 import argparse
 from ..helper import AvgBgr
-from .pipeline_modules import (
-    ColorIdealizer,
-    ColorAdjuster,
-    ForegroundRemover,
-    IdealizeColorsMode,
-    IdentityProcessor,
-    ImageProcessor,
-    Inpainter,
-    PerspectiveTransformer,
-    WipeSaver,
-)
+from .pipeline_modules import *
+from ..threadings import Slave
 
 
 def pipeline_builder(args: argparse.Namespace, avg_bgr: AvgBgr) -> ImageProcessor:
@@ -23,6 +14,11 @@ def pipeline_builder(args: argparse.Namespace, avg_bgr: AvgBgr) -> ImageProcesso
     wipe_saver = WipeSaver(args.saved_path)
 
     head = start
+
+    actor_ref = Slave.start()
+
+    foreground_mask = actor_ref.ask(self.foreground_remover.segment(whiteboard))
+
 
     if not args.disable_transform_perspective:
         head = head.set_next(perspective_transformer)
