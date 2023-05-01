@@ -1,9 +1,11 @@
 import cv2
 import numpy as np
-from enum import Enum
+from enum import Enum, auto
+
+from numpy.core.multiarray import ndarray
 
 from ..helper import distance
-from typing import Dict, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 from .segmenter import Segmentor
 from .inpainter import Inpainter
 from .corner_provider import CornerProvider
@@ -104,6 +106,24 @@ def apply_mask(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
     return masked_image
 
 
+def scale_saturation(image: np.ndarray, amount: float) -> np.ndarray:
+    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGRA2HSV)  # type: ignore
+    # Increase the saturation by amount%
+    hsv_image[..., 1] = hsv_image[..., 1] * amount
+    output_image = cv2.cvtColor(hsv_image, cv2.COLOR_HSV2BGRA)  # type: ignore
+    return output_image
+
+
+def fullness(image: np.ndarray) -> int:
+    binary_image = binarize(image)
+    return np.count_nonzero(binary_image == 255)
+
+
+def size(image: np.ndarray) -> int:
+    height, width, _ = image.shape
+    return height * width
+
+
 def binarize(image: np.ndarray) -> np.ndarray:
     image_grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # type: ignore
     binary_image = cv2.adaptiveThreshold(  # type: ignore
@@ -114,14 +134,6 @@ def binarize(image: np.ndarray) -> np.ndarray:
     return binary_image
 
 
-def scale_saturation(image: np.ndarray, amount: float) -> np.ndarray:
-    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGRA2HSV)  # type: ignore
-    # Increase the saturation by amount%
-    hsv_image[..., 1] = hsv_image[..., 1] * amount
-    output_image = cv2.cvtColor(hsv_image, cv2.COLOR_HSV2BGRA)  # type: ignore
-    return output_image
-
-
 class ChangeSuppressor :
     def __init__(self, sensitivity: float) -> None:
         assert 0 <= sensitivity and sensitivity <= 1
@@ -130,19 +142,45 @@ class ChangeSuppressor :
         self._last_significant_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
 
     def suppress(self, image: np.ndarray):
-        ratio = self._size(self._last_significant_image) / self._size(image)
-        relative_difference = abs(self._fullness(self._last_significant_image) - (ratio * self._fullness(image)))
-        threshold = self.sensitivity * self._size(self._last_significant_image)
+        ratio = size(self._last_significant_image) / size(image)
+        relative_difference = abs(fullness(self._last_significant_image) - (ratio * fullness(image)))
+        threshold = self.sensitivity * size(self._last_significant_image)
         if threshold < relative_difference:
             self._last_significant_image = image
         return self._last_significant_image
 
-    @staticmethod
-    def _fullness(image: np.ndarray) -> int:
-        binary_image = binarize(image)
-        return np.count_nonzero(binary_image == 255)
+class PeaksOnly: 
+    def __init__(self):
+        self._last_peak = np.ones((10, 10, 3), dtype=np.uint8) * 255
+        self._last_image = self._last_peak
+        self._mode = self.Mode.CLIMBING 
 
-    @staticmethod
-    def _size(image: np.ndarray) -> int:
-        height, width, _ = image.shape
-        return height * width
+    def show_peak(self, image: np.ndarray) -> np.ndarray:
+        if self._mode is self.Mode.CLIMBING:
+            if fullness(self._last_image) <= fullness(image):
+                self._mode = self.Mode.CLIMBING
+            elif fullness(self._last_image) > fullness(image):
+                self._last_peak = self._last_image
+                self._mode = self.Mode.DESCENDING
+        elif self._mode is self.Mode.DESCENDING:
+            if fullness(self._last_image) < fullness(image):
+                self._mode = self.Mode.CLIMBING
+            elif fullness(self._last_image) >= fullness(image):
+                self._mode = self.Mode.DESCENDING
+        self._last_image = image
+        return self._last_peak
+
+    class Mode(Enum):
+        CLIMBING = auto()
+        DESCENDING = auto()
+
+def save(image: np.ndarray, path: str, predicate: Callable[[np.ndarray], bool] = lambda _: True) -> np.ndarray:
+    if predicate(image):
+        cv2.imwrite(path, image) # type: ignore
+    return image
+
+
+
+
+
+
