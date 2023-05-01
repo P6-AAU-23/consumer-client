@@ -2,10 +2,8 @@ import cv2
 import numpy as np
 from enum import Enum, auto
 
-from numpy.core.multiarray import ndarray
-
 from ..helper import distance
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, Tuple
 from .segmenter import Segmentor
 from .inpainter import Inpainter
 from .corner_provider import CornerProvider
@@ -134,14 +132,14 @@ def binarize(image: np.ndarray) -> np.ndarray:
     return binary_image
 
 
-class ChangeSuppressor :
+class ChangeSuppressor:
     def __init__(self, sensitivity: float) -> None:
         assert 0 <= sensitivity and sensitivity <= 1
         self.sensitivity = sensitivity
         # Initialize last_image to a 10x10 white image
         self._last_significant_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
 
-    def suppress(self, image: np.ndarray):
+    def suppress(self, image: np.ndarray) -> np.ndarray:
         ratio = size(self._last_significant_image) / size(image)
         relative_difference = abs(fullness(self._last_significant_image) - (ratio * fullness(image)))
         threshold = self.sensitivity * size(self._last_significant_image)
@@ -149,11 +147,12 @@ class ChangeSuppressor :
             self._last_significant_image = image
         return self._last_significant_image
 
-class PeaksOnly: 
+
+class PeaksOnly:
     def __init__(self):
         self._last_peak = np.ones((10, 10, 3), dtype=np.uint8) * 255
         self._last_image = self._last_peak
-        self._mode = self.Mode.CLIMBING 
+        self._mode = self.Mode.CLIMBING
 
     def show_peak(self, image: np.ndarray) -> np.ndarray:
         if self._mode is self.Mode.CLIMBING:
@@ -174,13 +173,8 @@ class PeaksOnly:
         CLIMBING = auto()
         DESCENDING = auto()
 
+
 def save(image: np.ndarray, path: str, predicate: Callable[[np.ndarray], bool] = lambda _: True) -> np.ndarray:
     if predicate(image):
-        cv2.imwrite(path, image) # type: ignore
+        cv2.imwrite(path, image)  # type: ignore
     return image
-
-
-
-
-
-
