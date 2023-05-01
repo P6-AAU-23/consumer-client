@@ -41,6 +41,9 @@ sudo apt-get install -y \
 
 ## Usage
 
+### GUI wrapper for CLI
+1. `python3 server_gui`
+
 ### Webcam
 1. `python3 server_cli`
 
