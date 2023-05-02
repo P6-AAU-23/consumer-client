@@ -1,3 +1,4 @@
+from typing import Any
 from .pipeline import DelayedPeakFilter, SignificantChangeFilter, quadrilateral_to_rectangle
 import numpy as np
 import cv2
@@ -44,14 +45,14 @@ def test_quadrilateral_to_rectangle_known_transformation() -> None:
 
 
 @pytest.fixture
-def delayed_peak_filter_setup():
+def delayed_peak_filter_setup() -> Any:
     empty = cv2.imread("resources/IMG_2582.jpg")  # type: ignore
     full = cv2.imread("resources/IMG_2583.jpg")  # type: ignore
     filter = DelayedPeakFilter()
     return empty, full, filter
 
 
-def test_delayed_peak_filter_peak(delayed_peak_filter_setup) -> None:
+def test_delayed_peak_filter_peak(delayed_peak_filter_setup: Any) -> None:
     # arrange
     empty, full, filter = delayed_peak_filter_setup
     # act
@@ -62,7 +63,7 @@ def test_delayed_peak_filter_peak(delayed_peak_filter_setup) -> None:
     assert np.array_equal(actual, full)
 
 
-def test_delayed_peak_filter_vally(delayed_peak_filter_setup) -> None:
+def test_delayed_peak_filter_vally(delayed_peak_filter_setup: Any) -> None:
     # arrange
     empty, full, filter = delayed_peak_filter_setup
     # act
@@ -73,7 +74,7 @@ def test_delayed_peak_filter_vally(delayed_peak_filter_setup) -> None:
     assert actual is None
 
 
-def test_delayed_peak_filter_climbing_to_flat(delayed_peak_filter_setup) -> None:
+def test_delayed_peak_filter_climbing_to_flat(delayed_peak_filter_setup: Any) -> None:
     # arrange
     empty, full, filter = delayed_peak_filter_setup
     # act
@@ -84,7 +85,7 @@ def test_delayed_peak_filter_climbing_to_flat(delayed_peak_filter_setup) -> None
     assert actual is None
 
 
-def test_delayed_peak_filter_descending_to_flat(delayed_peak_filter_setup) -> None:
+def test_delayed_peak_filter_descending_to_flat(delayed_peak_filter_setup: Any) -> None:
     # arrange
     empty, full, filter = delayed_peak_filter_setup
     # act
@@ -95,15 +96,16 @@ def test_delayed_peak_filter_descending_to_flat(delayed_peak_filter_setup) -> No
     assert actual is None
     # pass
 
+
 @pytest.fixture
-def significant_change_filter_setup():
+def significant_change_filter_setup() -> Any:
     empty = cv2.imread("resources/IMG_2582.jpg")  # type: ignore
     full = cv2.imread("resources/IMG_2583.jpg")  # type: ignore
     filter = SignificantChangeFilter(0.03, 0.03)
     return empty, full, filter
 
 
-def test_significant_change_filter_climbing(significant_change_filter_setup) -> None:
+def test_significant_change_filter_climbing(significant_change_filter_setup: Any) -> None:
     # arrange
     empty, full, filter = significant_change_filter_setup
     # act
@@ -113,7 +115,7 @@ def test_significant_change_filter_climbing(significant_change_filter_setup) -> 
     assert np.array_equal(actual, full)
 
 
-def test_significant_change_filter_descending(significant_change_filter_setup) -> None:
+def test_significant_change_filter_descending(significant_change_filter_setup: Any) -> None:
     # arrange
     empty, full, filter = significant_change_filter_setup
     # act
@@ -123,7 +125,7 @@ def test_significant_change_filter_descending(significant_change_filter_setup) -
     assert np.array_equal(actual, empty)
 
 
-def test_significant_change_filter_no_significant_change(significant_change_filter_setup) -> None:
+def test_significant_change_filter_no_significant_change(significant_change_filter_setup: Any) -> None:
     # arrange
     empty, _, filter = significant_change_filter_setup
     # act
