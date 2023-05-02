@@ -1,6 +1,7 @@
-from .pipeline import quadrilateral_to_rectangle
+from .pipeline import DelayedPeakFilter, quadrilateral_to_rectangle
 import numpy as np
 import cv2
+import pytest
 
 
 def test_warp_quadrilateral_to_rectangle_no_transformation() -> None:
@@ -40,3 +41,56 @@ def test_quadrilateral_to_rectangle_known_transformation() -> None:
     expected_image = np.zeros((50, 50, 3), dtype=np.uint8)
     cv2.rectangle(expected_image, (0, 0), (49, 49), (255, 255, 255), -1)  # type: ignore
     assert np.array_equal(warped_image, expected_image)
+
+
+@pytest.fixture
+def delayed_peak_filter_setup():
+    empty = cv2.imread("resources/IMG_2582.jpg")  # type: ignore
+    full = cv2.imread("resources/IMG_2583.jpg")  # type: ignore
+    filter = DelayedPeakFilter()
+    return empty, full, filter
+
+
+def test_delayed_peak_filter_peak(delayed_peak_filter_setup) -> None:
+    # arrange
+    empty, full, filter = delayed_peak_filter_setup
+    # act
+    filter.filter(empty)
+    filter.filter(full)
+    actual = filter.filter(empty)
+    # assert
+    assert np.array_equal(actual, full)
+
+
+def test_delayed_peak_filter_vally(delayed_peak_filter_setup) -> None:
+    # arrange
+    empty, full, filter = delayed_peak_filter_setup
+    # act
+    filter.filter(full)
+    filter.filter(empty)
+    actual = filter.filter(full)
+    # assert
+    assert actual is None
+
+
+def test_delayed_peak_filter_climbing_to_flat(delayed_peak_filter_setup) -> None:
+    # arrange
+    empty, full, filter = delayed_peak_filter_setup
+    # act
+    filter.filter(empty)
+    filter.filter(full)
+    actual = filter.filter(full)
+    # assert
+    assert actual is None
+
+
+def test_delayed_peak_filter_descending_to_flat(delayed_peak_filter_setup) -> None:
+    # arrange
+    empty, full, filter = delayed_peak_filter_setup
+    # act
+    filter.filter(full)
+    filter.filter(empty)
+    actual = filter.filter(empty)
+    # assert
+    assert actual is None
+    # pass
