@@ -99,14 +99,15 @@ def test_delayed_peak_filter_descending_to_flat(delayed_peak_filter_setup) -> No
 def significant_change_filter_setup():
     empty = cv2.imread("resources/IMG_2582.jpg")  # type: ignore
     full = cv2.imread("resources/IMG_2583.jpg")  # type: ignore
-    filter = SignificantChangeFilter(0.01, 0.01)
+    filter = SignificantChangeFilter(0.03, 0.03)
     return empty, full, filter
 
 
 def test_significant_change_filter_climbing(significant_change_filter_setup) -> None:
     # arrange
-    _, full, filter = significant_change_filter_setup
+    empty, full, filter = significant_change_filter_setup
     # act
+    filter.filter(empty)  # Apply the filter with the empty image first to update _last_significant_image
     actual = filter.filter(full)
     # assert
     assert np.array_equal(actual, full)
