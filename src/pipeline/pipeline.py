@@ -116,14 +116,14 @@ def scale_saturation(image: np.ndarray, amount: float) -> np.ndarray:
     return output_image
 
 
-def fullness(image: np.ndarray) -> int:
+def fullness(image: np.ndarray) -> float:
     image_grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # type: ignore
     binary_image = cv2.adaptiveThreshold(  # type: ignore
         image_grey, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 4  # type: ignore
     )
     binary_image = cv2.medianBlur(binary_image, 3)  # type: ignore
     binary_image = cv2.bitwise_not(binary_image)  # type: ignore
-    return np.count_nonzero(binary_image == 255)
+    return  np.count_nonzero(binary_image == 255) / size(image)
 
 
 def size(image: np.ndarray) -> int:
@@ -154,22 +154,21 @@ class SignificantPeakFilter:
 
 
 class SignificantChangeFilter:
-    def __init__(self, climbing_sensitivity: float, descending_sensitivity: float) -> None:
-        assert 0 <= climbing_sensitivity and climbing_sensitivity <= 1
-        assert 0 <= descending_sensitivity and descending_sensitivity <= 1
-        self._climbing_sensitivity = climbing_sensitivity
-        self._descending_sensitivity = descending_sensitivity
+    def __init__(self, climbing_threshold: float, descending_threshold: float) -> None:
+        assert 0 <= climbing_threshold and climbing_threshold <= 1
+        assert 0 <= descending_threshold and descending_threshold <= 1
+        self._climbing_threshold = climbing_threshold
+        self._descending_threshold = descending_threshold
         # Initialize last_image to a 10x10 white image
         self._last_significant_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
 
     def filter(self, image: np.ndarray) -> Optional[np.ndarray]:
-        ratio = size(self._last_significant_image) / size(image)
-        relative_difference = (ratio * fullness(image)) - fullness(self._last_significant_image)
-        if relative_difference > 0:
-            threshold = self._climbing_sensitivity * size(self._last_significant_image)
-        elif relative_difference <= 0:
-            threshold = self._descending_sensitivity * size(self._last_significant_image)
-        if threshold < abs(relative_difference):
+        Δ_fullness = fullness(image) - fullness(self._last_significant_image)
+        if Δ_fullness > 0:
+            Δ_fullness_threshold = self._climbing_threshold
+        elif Δ_fullness <= 0:
+            Δ_fullness_threshold = self._descending_threshold
+        if Δ_fullness_threshold < abs(Δ_fullness):
             self._last_significant_image = image
             return self._last_significant_image
         return None
