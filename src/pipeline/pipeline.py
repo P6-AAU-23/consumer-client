@@ -131,7 +131,7 @@ def fullness(whiteboard: np.ndarray) -> float:
     )
     binary_image = cv2.medianBlur(binary_image, 3)  # type: ignore
     binary_image = cv2.bitwise_not(binary_image)  # type: ignore
-    return  np.count_nonzero(binary_image == 255) / size(whiteboard)
+    return np.count_nonzero(binary_image == 255) / size(whiteboard)
 
 
 def size(image: np.ndarray) -> int:
@@ -162,7 +162,7 @@ class SignificantPeakFilter:
         _peak_filter (DelayedPeakFilter): A filter to detect peaks in fullness.
     """
 
-    def __init__(self, climbing_Δ_threshold: float, descending_Δ_threshold: float) -> None:
+    def __init__(self, climbing_Δ_threshold: float, descending_Δ_threshold: float) -> None:  # noqa: N803
         """
         Initialize the SignificantPeakFilter instance.
 
@@ -203,7 +203,7 @@ class SignificantChangeFilter:
         _last_significant_image (np.ndarray): The last significant image.
     """
 
-    def __init__(self, climbing_Δ_threshold: float, descending_Δ_threshold: float) -> None:
+    def __init__(self, climbing_Δ_threshold: float, descending_Δ_threshold: float) -> None:  # noqa:N803
         """
         Initialize the SignificantChangeFilter instance.
 
@@ -228,11 +228,11 @@ class SignificantChangeFilter:
         Returns:
             Optional[np.ndarray]: The input image if the change is significant, otherwise None.
         """
-        Δ_fullness = fullness(image) - fullness(self._last_significant_image)
+        Δ_fullness = fullness(image) - fullness(self._last_significant_image)  # noqa: N806
         if Δ_fullness > 0:
-            Δ_fullness_threshold = self._climbing_Δ_threshold
+            Δ_fullness_threshold = self._climbing_Δ_threshold  # noqa: N806
         elif Δ_fullness <= 0:
-            Δ_fullness_threshold = self._descending_Δ_threshold
+            Δ_fullness_threshold = self._descending_Δ_threshold  # noqa: N806
         if Δ_fullness_threshold < abs(Δ_fullness):
             self._last_significant_image = image
             return self._last_significant_image
