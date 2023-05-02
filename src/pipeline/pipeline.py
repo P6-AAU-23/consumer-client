@@ -116,14 +116,22 @@ def scale_saturation(image: np.ndarray, amount: float) -> np.ndarray:
     return output_image
 
 
-def fullness(image: np.ndarray) -> float:
-    image_grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # type: ignore
+def fullness(whiteboard: np.ndarray) -> float:
+    """Calculate the fullness of a whiteboard, that is, the ratio of the whiteboard that has been drawn on.
+
+    Args:
+        whiteboard (np.ndarray): The input whiteboard in BGR format.
+
+    Returns:
+        float: The fullness of the whiteboard as a ratio.
+    """
+    image_grey = cv2.cvtColor(whiteboard, cv2.COLOR_BGR2GRAY)  # type: ignore
     binary_image = cv2.adaptiveThreshold(  # type: ignore
         image_grey, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 4  # type: ignore
     )
     binary_image = cv2.medianBlur(binary_image, 3)  # type: ignore
     binary_image = cv2.bitwise_not(binary_image)  # type: ignore
-    return  np.count_nonzero(binary_image == 255) / size(image)
+    return  np.count_nonzero(binary_image == 255) / size(whiteboard)
 
 
 def size(image: np.ndarray) -> int:
@@ -142,11 +150,39 @@ def binarize(image: np.ndarray) -> np.ndarray:
 
 
 class SignificantPeakFilter:
-    def __init__(self, climbing_sensitivity: float, descending_sensitivity: float) -> None:
-        self._significant_change_filter = SignificantChangeFilter(climbing_sensitivity, descending_sensitivity)
+    """
+    A filter that returns a peak image if there is a significant change in fullness.
+
+    The filter combines the functionality of SignificantChangeFilter and DelayedPeakFilter.
+    It first applies the SignificantChangeFilter to detect significant changes in fullness, and
+    then applies the DelayedPeakFilter to detect peaks in the significant changes.
+
+    Attributes:
+        _significant_change_filter (SignificantChangeFilter): A filter to detect significant changes in fullness.
+        _peak_filter (DelayedPeakFilter): A filter to detect peaks in fullness.
+    """
+
+    def __init__(self, climbing_Δ_threshold: float, descending_Δ_threshold: float) -> None:
+        """
+        Initialize the SignificantPeakFilter instance.
+
+        Args:
+            climbing_Δ_threshold (float): Threshold for detecting significant increases in fullness.
+            descending_Δ_threshold (float): Threshold for detecting significant decreases in fullness.
+        """
+        self._significant_change_filter = SignificantChangeFilter(climbing_Δ_threshold, descending_Δ_threshold)
         self._peak_filter = DelayedPeakFilter()
 
     def filter(self, image: np.ndarray) -> Optional[np.ndarray]:
+        """
+        Apply the significant peak filter to the given image.
+
+        Args:
+            image (np.ndarray): The input image in BGR format.
+
+        Returns:
+            Optional[np.ndarray]: The peak image when detected, otherwise None.
+        """
         _image = self._significant_change_filter.filter(image)
         if _image is None:
             return None
@@ -154,20 +190,49 @@ class SignificantPeakFilter:
 
 
 class SignificantChangeFilter:
-    def __init__(self, climbing_threshold: float, descending_threshold: float) -> None:
-        assert 0 <= climbing_threshold and climbing_threshold <= 1
-        assert 0 <= descending_threshold and descending_threshold <= 1
-        self._climbing_threshold = climbing_threshold
-        self._descending_threshold = descending_threshold
+    """
+    A filter that returns an image only if there is a significant change in its fullness.
+
+    The filter considers an image change as significant if the change in fullness surpasses a
+    predefined threshold. It maintains the last significant image and returns the current image
+    if the change is significant; otherwise, it returns None.
+
+    Attributes:
+        _climbing_Δ_threshold (float): Threshold for increasing fullness.
+        _descending_Δ_threshold (float): Threshold for decreasing fullness.
+        _last_significant_image (np.ndarray): The last significant image.
+    """
+
+    def __init__(self, climbing_Δ_threshold: float, descending_Δ_threshold: float) -> None:
+        """
+        Initialize the SignificantChangeFilter instance.
+
+        Args:
+            climbing_Δ_threshold (float): Threshold for increasing fullness (0 <= value <= 1).
+            descending_Δ_threshold (float): Threshold for decreasing fullness (0 <= value <= 1).
+        """
+        assert 0 <= climbing_Δ_threshold and climbing_Δ_threshold <= 1
+        assert 0 <= descending_Δ_threshold and descending_Δ_threshold <= 1
+        self._climbing_Δ_threshold = climbing_Δ_threshold
+        self._descending_Δ_threshold = descending_Δ_threshold
         # Initialize last_image to a 10x10 white image
         self._last_significant_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
 
     def filter(self, image: np.ndarray) -> Optional[np.ndarray]:
+        """
+        Apply the significant change filter to the given image.
+
+        Args:
+            image (np.ndarray): The input image in BGR format.
+
+        Returns:
+            Optional[np.ndarray]: The input image if the change is significant, otherwise None.
+        """
         Δ_fullness = fullness(image) - fullness(self._last_significant_image)
         if Δ_fullness > 0:
-            Δ_fullness_threshold = self._climbing_threshold
+            Δ_fullness_threshold = self._climbing_Δ_threshold
         elif Δ_fullness <= 0:
-            Δ_fullness_threshold = self._descending_threshold
+            Δ_fullness_threshold = self._descending_Δ_threshold
         if Δ_fullness_threshold < abs(Δ_fullness):
             self._last_significant_image = image
             return self._last_significant_image
@@ -175,12 +240,40 @@ class SignificantChangeFilter:
 
 
 class DelayedPeakFilter:
+    """
+    A filter that returns an image when it detects a peak in fullness after a delay.
+
+    The filter detects a peak in fullness by switching between two modes: climbing and descending.
+    When in climbing mode, the filter checks if the fullness of the current image is less than the
+    fullness of the previous image. If so, it switches to descending mode and returns the peak image.
+    In descending mode, it switches back to climbing mode when the fullness of the current image
+    becomes greater than the previous image.
+
+    Attributes:
+        _last_image (np.ndarray): The last image received by the filter.
+        _last_peak (np.ndarray): The last detected peak in fullness.
+        _mode (Mode): The current mode of the filter, either CLIMBING or DESCENDING.
+    """
+
+    class Mode(Enum):
+        CLIMBING = auto()
+        DESCENDING = auto()
+
     def __init__(self):
         self._last_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
         self._last_peak = self._last_image
         self._mode = self.Mode.CLIMBING
 
     def filter(self, image: np.ndarray) -> Optional[np.ndarray]:
+        """
+        Apply the delayed peak filter to the given image.
+
+        Args:
+            image (np.ndarray): The input image in BGR format.
+
+        Returns:
+            Optional[np.ndarray]: The peak image when detected, otherwise None.
+        """
         if self._mode is self.Mode.CLIMBING:
             if fullness(self._last_image) <= fullness(image):
                 self._mode = self.Mode.CLIMBING
@@ -194,7 +287,3 @@ class DelayedPeakFilter:
                 self._mode = self.Mode.DESCENDING
         self._last_image = image
         return None
-
-    class Mode(Enum):
-        CLIMBING = auto()
-        DESCENDING = auto()
