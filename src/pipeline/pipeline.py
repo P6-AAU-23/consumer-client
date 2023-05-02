@@ -3,7 +3,7 @@ import numpy as np
 from enum import Enum, auto
 
 from ..helper import distance
-from typing import Callable, Dict, Tuple
+from typing import Dict, Tuple
 from .segmenter import Segmentor
 from .inpainter import Inpainter
 from .corner_provider import CornerProvider
@@ -15,7 +15,7 @@ class Pipeline:
         self.corner_provider = CornerProvider("Corner Selection Preview")
         self.inpainter = Inpainter()
         self.foreground_remover = Segmentor()
-        self.cs = ChangeSuppressor(0.005)
+        self.significant_peak_filter = SignificantPeakFilter(0.005)
 
     def process(self, image: np.ndarray) -> np.ndarray:
         self.corner_provider.update(image)
@@ -24,7 +24,7 @@ class Pipeline:
         foreground_mask = self.foreground_remover.segment(whiteboard)
         whiteboard = idealize_colors(whiteboard, IdealizeColorsMode.MASKING)
         whiteboard = self.inpainter.inpaint_missing(whiteboard, foreground_mask)
-        whiteboard = self.cs.suppress(whiteboard)
+        whiteboard = self.significant_peak_filter.filter(whiteboard)
         return whiteboard
 
 
@@ -132,29 +132,42 @@ def binarize(image: np.ndarray) -> np.ndarray:
     return binary_image
 
 
-class ChangeSuppressor:
+class SignificantPeakFilter:
+    def __init__(self, sensitivity: float) -> None:
+        self._significant_change_filter = SignificantChangeFilter(sensitivity)
+        self._peak_filter = PeakFilter()
+
+    def filter(self, image: np.ndarray) -> np.ndarray:
+        image = self._significant_change_filter.filter(image)
+        return self._peak_filter.filter(image)
+
+
+class SignificantChangeFilter:
     def __init__(self, sensitivity: float) -> None:
         assert 0 <= sensitivity and sensitivity <= 1
         self.sensitivity = sensitivity
         # Initialize last_image to a 10x10 white image
         self._last_significant_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
 
-    def suppress(self, image: np.ndarray) -> np.ndarray:
+    def filter(self, image: np.ndarray) -> np.ndarray:
         ratio = size(self._last_significant_image) / size(image)
-        relative_difference = abs(fullness(self._last_significant_image) - (ratio * fullness(image)))
-        threshold = self.sensitivity * size(self._last_significant_image)
-        if threshold < relative_difference:
+        relative_difference = fullness(self._last_significant_image) - (ratio * fullness(image))
+        if relative_difference > 0:
+            threshold = self.sensitivity * size(self._last_significant_image)
+            if threshold < relative_difference:
+                self._last_significant_image = image
+        elif relative_difference <= 0:
             self._last_significant_image = image
         return self._last_significant_image
 
 
-class PeaksOnly:
+class PeakFilter:
     def __init__(self):
         self._last_peak = np.ones((10, 10, 3), dtype=np.uint8) * 255
         self._last_image = self._last_peak
         self._mode = self.Mode.CLIMBING
 
-    def show_peak(self, image: np.ndarray) -> np.ndarray:
+    def filter(self, image: np.ndarray) -> np.ndarray:
         if self._mode is self.Mode.CLIMBING:
             if fullness(self._last_image) <= fullness(image):
                 self._mode = self.Mode.CLIMBING
@@ -172,9 +185,3 @@ class PeaksOnly:
     class Mode(Enum):
         CLIMBING = auto()
         DESCENDING = auto()
-
-
-def save(image: np.ndarray, path: str, predicate: Callable[[np.ndarray], bool] = lambda _: True) -> np.ndarray:
-    if predicate(image):
-        cv2.imwrite(path, image)  # type: ignore
-    return image
