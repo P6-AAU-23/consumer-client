@@ -8,34 +8,24 @@ from .inpainter import Inpainter
 from .corner_provider import CornerProvider
 
 class Pipeline:
-    # def __init__(self):
-    #     # self.corner_provider = CornerProvider("Corner Selection Preview")
-    #     # self.inpainter = Inpainter()
-    #     # self.foreground_remover = Segmentor()
-        
+    def __init__(self):
+        self.start_handler = StartHandler()
+        self.corner_provider_handler = CornerProviderHandler()
+        self.foreground_remover_handler = ForegroundRemoverHandler()
+        self.idealize_colors_handler = IdealizeColorsHandler()
+        self.inpainter_handler = InpainterHandler()
+        self.final_handler = FinalHandler()
 
-    def set_next(self, step):
-        self._next_step = step
+        self.start_handler.set_successor(self.corner_provider_handler)
+        self.corner_provider_handler.set_successor(self.foreground_remover_handler)
+        self.foreground_remover_handler.set_successor(self.idealize_colors_handler)
+        self.idealize_colors_handler.set_successor(self.inpainter_handler)
+        self.inpainter_handler.set_successor(self.final_handler)
     
 
 
     def process(self, image: np.ndarray) -> np.ndarray:
-        skip_step = False
-        
-        skip_step_handler = SkipStepHandler(skip_step)
-        corner_provider_handler = CornerProviderHandler()
-        foreground_remover_handler = ForegroundRemoverHandler()
-        idealize_colors_handler = IdealizeColorsHandler()
-        inpainter_handler = InpainterHandler()
-        final_handler = FinalHandler()
-
-        skip_step_handler.set_successor(corner_provider_handler)
-        corner_provider_handler.set_successor(foreground_remover_handler)
-        foreground_remover_handler.set_successor(idealize_colors_handler)
-        idealize_colors_handler.set_successor(inpainter_handler)
-        inpainter_handler.set_successor(final_handler)
-
-        result = final_handler.handle(image)
+        result = self.start_handler.handle(image)
         return result
 
 
@@ -59,6 +49,13 @@ class SkipStepHandler(ImageHandler):
             return image
         else:
             return self._successor.handle(image)
+        
+class StartHandler(ImageHandler):
+    def __init__(self, successor=None):
+        super().__init__(successor)
+    def handle(self, image):
+        return self._successor.handle(image)
+
         
 class CornerProviderHandler(ImageHandler):
     def __init__(self):
