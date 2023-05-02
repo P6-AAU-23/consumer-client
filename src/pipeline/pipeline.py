@@ -87,8 +87,8 @@ class InpainterHandler(ImageHandler):
     def handle(self, data):
         whiteboard, foreground_mask = data
         whiteboard = self.inpainter.inpaint_missing(whiteboard, foreground_mask)
-        return whiteboard
-    
+        return self._successor.handle(whiteboard)
+
 class FinalHandler (ImageHandler):
     def __init__(self, successor=None):
         super().__init__(successor)
