@@ -62,7 +62,7 @@ class SkipStepHandler(ImageHandler):
         
 class CornerProviderHandler(ImageHandler):
     def __init__(self):
-        self.corner_provider = CornerProvider(gui_window_name="test")
+        self.corner_provider = CornerProvider(gui_window_name="Corner Selection Preview")
     def handle(self, image):
         self.corner_provider.update(image)
         corners = self.corner_provider.get_corners()
