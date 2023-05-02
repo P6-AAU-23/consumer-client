@@ -1,7 +1,7 @@
 import cv2
 from typing import Any
 from pathlib import Path
-from .pipeline.pipeline import Pipeline, SignificantChangeFilter, SignificantPeakFilter
+from .pipeline.pipeline import Pipeline, SignificantPeakFilter
 from .current_whiteboard import CurrentWhiteboard
 from .bufferless_video_capture import BufferlessVideoCapture
 from .helper import try_int_to_string
