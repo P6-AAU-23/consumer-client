@@ -1,7 +1,7 @@
 import cv2
 from typing import Any
 from pathlib import Path
-from .pipeline.pipeline import Pipeline
+from .pipeline.pipeline import Pipeline, SignificantChangeFilter
 from .current_whiteboard import CurrentWhiteboard
 from .bufferless_video_capture import BufferlessVideoCapture
 from .helper import try_int_to_string
@@ -13,6 +13,7 @@ class Controller:
         self.cap = BufferlessVideoCapture(try_int_to_string(args.video_capture_address))
         self.latest_whiteboard = CurrentWhiteboard(Path(args.saved_path))
         self.pipeline = Pipeline()
+        self._significant_change_filter = SignificantChangeFilter(0, 0.005)
 
     def run(self) -> None:
         if not self.cap.is_opened():
@@ -24,7 +25,11 @@ class Controller:
                 print("Can't receive frame (stream end?). Exiting ...")
                 break
 
-            self.latest_whiteboard.set_whiteboard(self.pipeline.process(image))
+            whiteboard = self.pipeline.process(image)
+            self.latest_whiteboard.set_whiteboard(whiteboard)
+            whiteboard = self._significant_change_filter.filter(whiteboard)
+            if whiteboard is not None:
+                self.latest_whiteboard.save_whiteboard
 
             cv2.imshow("preview", self.latest_whiteboard.get_whiteboard())  # type: ignore
 

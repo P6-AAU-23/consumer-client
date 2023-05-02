@@ -15,8 +15,6 @@ class Pipeline:
         self.corner_provider = CornerProvider("Corner Selection Preview")
         self.inpainter = Inpainter()
         self.foreground_remover = Segmentor()
-        self.significant_peak_filter = SignificantPeakFilter(0, 0.005)
-        self._last_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
 
     def process(self, image: np.ndarray) -> np.ndarray:
         self.corner_provider.update(image)
@@ -25,10 +23,6 @@ class Pipeline:
         foreground_mask = self.foreground_remover.segment(whiteboard)
         whiteboard = idealize_colors(whiteboard, IdealizeColorsMode.MASKING)
         whiteboard = self.inpainter.inpaint_missing(whiteboard, foreground_mask)
-        whiteboard = self.significant_peak_filter.filter(whiteboard)
-        if whiteboard is None:
-            return self._last_image
-        self._last_image = whiteboard
         return whiteboard
 
 
