@@ -3,7 +3,7 @@ import numpy as np
 from enum import Enum, auto
 
 from ..helper import distance
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 from .segmenter import Segmentor
 from .inpainter import Inpainter
 from .corner_provider import CornerProvider
@@ -15,7 +15,8 @@ class Pipeline:
         self.corner_provider = CornerProvider("Corner Selection Preview")
         self.inpainter = Inpainter()
         self.foreground_remover = Segmentor()
-        self.significant_peak_filter = SignificantPeakFilter(0.005)
+        self.significant_peak_filter = SignificantPeakFilter(0, 0.005)
+        self._last_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
 
     def process(self, image: np.ndarray) -> np.ndarray:
         self.corner_provider.update(image)
@@ -25,6 +26,9 @@ class Pipeline:
         whiteboard = idealize_colors(whiteboard, IdealizeColorsMode.MASKING)
         whiteboard = self.inpainter.inpaint_missing(whiteboard, foreground_mask)
         whiteboard = self.significant_peak_filter.filter(whiteboard)
+        if whiteboard is None:
+            return self._last_image
+        self._last_image = whiteboard
         return whiteboard
 
 
@@ -138,54 +142,59 @@ def binarize(image: np.ndarray) -> np.ndarray:
 
 
 class SignificantPeakFilter:
-    def __init__(self, sensitivity: float) -> None:
-        self._significant_change_filter = SignificantChangeFilter(sensitivity)
+    def __init__(self, climbing_sensitivity: float, descending_sensitivity: float) -> None:
+        self._significant_change_filter = SignificantChangeFilter(climbing_sensitivity, descending_sensitivity)
         self._peak_filter = PeakFilter()
 
-    def filter(self, image: np.ndarray) -> np.ndarray:
-        image = self._significant_change_filter.filter(image)
-        return self._peak_filter.filter(image)
+    def filter(self, image: np.ndarray) -> Optional[np.ndarray]:
+        _image = self._significant_change_filter.filter(image)
+        if _image is None:
+            return None
+        return self._peak_filter.filter(_image)
 
 
 class SignificantChangeFilter:
-    def __init__(self, sensitivity: float) -> None:
-        assert 0 <= sensitivity and sensitivity <= 1
-        self.sensitivity = sensitivity
+    def __init__(self, climbing_sensitivity: float, descending_sensitivity: float) -> None:
+        assert 0 <= climbing_sensitivity and climbing_sensitivity <= 1
+        assert 0 <= descending_sensitivity and descending_sensitivity <= 1
+        self._climbing_sensitivity = climbing_sensitivity
+        self._descending_sensitivity = descending_sensitivity
         # Initialize last_image to a 10x10 white image
         self._last_significant_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
 
-    def filter(self, image: np.ndarray) -> np.ndarray:
+    def filter(self, image: np.ndarray) -> Optional[np.ndarray]:
         ratio = size(self._last_significant_image) / size(image)
-        relative_difference = fullness(self._last_significant_image) - (ratio * fullness(image))
+        relative_difference = (ratio * fullness(image)) - fullness(self._last_significant_image)
         if relative_difference > 0:
-            threshold = self.sensitivity * size(self._last_significant_image)
-            if threshold < relative_difference:
-                self._last_significant_image = image
+            threshold = self._climbing_sensitivity * size(self._last_significant_image)
         elif relative_difference <= 0:
+            threshold = self._descending_sensitivity * size(self._last_significant_image)
+        if threshold < abs(relative_difference):
             self._last_significant_image = image
-        return self._last_significant_image
+            return self._last_significant_image
+        return None
 
 
 class PeakFilter:
     def __init__(self):
-        self._last_peak = np.ones((10, 10, 3), dtype=np.uint8) * 255
-        self._last_image = self._last_peak
+        self._last_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
+        self._last_peak = self._last_image
         self._mode = self.Mode.CLIMBING
 
-    def filter(self, image: np.ndarray) -> np.ndarray:
+    def filter(self, image: np.ndarray) -> Optional[np.ndarray]:
         if self._mode is self.Mode.CLIMBING:
             if fullness(self._last_image) <= fullness(image):
                 self._mode = self.Mode.CLIMBING
             elif fullness(self._last_image) > fullness(image):
-                self._last_peak = self._last_image
                 self._mode = self.Mode.DESCENDING
+                return self._last_image
         elif self._mode is self.Mode.DESCENDING:
             if fullness(self._last_image) < fullness(image):
                 self._mode = self.Mode.CLIMBING
             elif fullness(self._last_image) >= fullness(image):
                 self._mode = self.Mode.DESCENDING
         self._last_image = image
-        return self._last_peak
+        return None
 
     class Mode(Enum):
         CLIMBING = auto()
