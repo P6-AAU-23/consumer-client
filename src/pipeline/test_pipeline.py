@@ -1,4 +1,4 @@
-from .pipeline import DelayedPeakFilter, quadrilateral_to_rectangle
+from .pipeline import DelayedPeakFilter, SignificantChangeFilter, quadrilateral_to_rectangle
 import numpy as np
 import cv2
 import pytest
@@ -94,3 +94,39 @@ def test_delayed_peak_filter_descending_to_flat(delayed_peak_filter_setup) -> No
     # assert
     assert actual is None
     # pass
+
+@pytest.fixture
+def significant_change_filter_setup():
+    empty = cv2.imread("resources/IMG_2582.jpg")  # type: ignore
+    full = cv2.imread("resources/IMG_2583.jpg")  # type: ignore
+    filter = SignificantChangeFilter(0.01, 0.01)
+    return empty, full, filter
+
+
+def test_significant_change_filter_climbing(significant_change_filter_setup) -> None:
+    # arrange
+    _, full, filter = significant_change_filter_setup
+    # act
+    actual = filter.filter(full)
+    # assert
+    assert np.array_equal(actual, full)
+
+
+def test_significant_change_filter_descending(significant_change_filter_setup) -> None:
+    # arrange
+    empty, full, filter = significant_change_filter_setup
+    # act
+    filter.filter(full)  # Apply the filter with the full image first to update _last_significant_image
+    actual = filter.filter(empty)
+    # assert
+    assert np.array_equal(actual, empty)
+
+
+def test_significant_change_filter_no_significant_change(significant_change_filter_setup) -> None:
+    # arrange
+    empty, _, filter = significant_change_filter_setup
+    # act
+    filter.filter(empty)  # Apply the filter with the empty image first to update _last_significant_image
+    actual = filter.filter(empty)
+    # assert
+    assert actual is None
