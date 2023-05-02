@@ -1,7 +1,9 @@
-from typing import Tuple
-import numpy as np
 import os
 import cv2
+import numpy as np
+from typing import Tuple
+from pathlib import Path
+from datetime import datetime
 
 
 def distance(pt1: Tuple[float, float], pt2: Tuple[float, float]) -> float:
@@ -15,6 +17,37 @@ def distance(pt1: Tuple[float, float], pt2: Tuple[float, float]) -> float:
         float: The Euclidean distance between the two points.
     """
     return np.sqrt((pt1[0] - pt2[0]) ** 2 + (pt1[1] - pt2[1]) ** 2)
+
+
+def write_path_with_date_and_time(name: str, path: Path) -> str:
+    """Generates a path with a unique name with the time and date for an image you want to save.
+
+    Args:
+        name: Name of the file you want save.
+        path: The path to the location you want to save.
+
+    Returns:
+        str: String of the full path with unique name and date/time.
+    """
+    now = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
+    full_name = name + now + ".jpg"
+    full_path = path / full_name
+    return str(uniquify_file_name(full_path))
+
+
+def write_path_with_unique_name(name: str, path: Path) -> str:
+    """Generates a path with a unique name for an image you want to save.
+
+        Args:
+            name: Name of the file you want save.
+            path: The path to the location you want to save.
+
+        Returns:
+            str: String of path with unique name
+    """
+    full_name = name + ".jpg"
+    full_path = path / full_name
+    return str(uniquify_file_name(full_path))
 
 
 def uniquify_file_name(path: str) -> str:
@@ -34,3 +67,33 @@ def dilate_black_regions(binary_mask: np.ndarray, kernel_size: Tuple[int, int] =
     dilated_inverted_mask = cv2.dilate(inverted_mask, kernel, iterations=iterations)  # type: ignore
     dilated_mask = cv2.bitwise_not(dilated_inverted_mask)  # type: ignore
     return dilated_mask
+
+
+def list_ports() -> list[str]:
+
+    dev_port = 0
+    working_ports = []
+    available_ports = []
+
+    i = 0
+    while i <= 10:  # looking through 10 ports
+        camera = cv2.VideoCapture(dev_port)
+        if camera.isOpened():
+            i = 0  # if we find a port, the counter is reset to look through 10 more ports
+            is_reading, img = camera.read()
+
+            if is_reading:
+                working_ports.append(str(dev_port))
+            else:
+                available_ports.append(str(dev_port))
+
+        i += 1
+        dev_port += 1
+    return working_ports
+
+
+def try_int_to_string(s: str) -> str | int:
+    try:
+        return int(s)
+    except ValueError:
+        return s

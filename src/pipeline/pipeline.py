@@ -1,11 +1,11 @@
-from .corner_provider import CornerProvider
-from typing import Dict, Tuple
-from .inpainter import Inpainter
-from .segmenter import Segmentor
-from ..helper import distance
-import numpy as np
 import cv2
+import numpy as np
 from enum import Enum
+from ..helper import distance
+from typing import Dict, Tuple
+from .segmenter import Segmentor
+from .inpainter import Inpainter
+from .corner_provider import CornerProvider
 
 class Pipeline:
     # def __init__(self):
@@ -17,6 +17,7 @@ class Pipeline:
     def set_next(self, step):
         self._next_step = step
     
+
 
     def process(self, image: np.ndarray) -> np.ndarray:
         skip_step = False
