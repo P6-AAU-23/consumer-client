@@ -144,7 +144,7 @@ def binarize(image: np.ndarray) -> np.ndarray:
 class SignificantPeakFilter:
     def __init__(self, climbing_sensitivity: float, descending_sensitivity: float) -> None:
         self._significant_change_filter = SignificantChangeFilter(climbing_sensitivity, descending_sensitivity)
-        self._peak_filter = PeakFilter()
+        self._peak_filter = DelayedPeakFilter()
 
     def filter(self, image: np.ndarray) -> Optional[np.ndarray]:
         _image = self._significant_change_filter.filter(image)
@@ -175,7 +175,7 @@ class SignificantChangeFilter:
         return None
 
 
-class PeakFilter:
+class DelayedPeakFilter:
     def __init__(self):
         self._last_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
         self._last_peak = self._last_image
