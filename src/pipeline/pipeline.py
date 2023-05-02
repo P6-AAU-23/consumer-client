@@ -7,22 +7,95 @@ import numpy as np
 import cv2
 from enum import Enum
 
-
 class Pipeline:
-    def __init__(self):
-        self.corner_provider = CornerProvider("Corner Selection Preview")
-        self.inpainter = Inpainter()
-        self.foreground_remover = Segmentor()
+    # def __init__(self):
+    #     # self.corner_provider = CornerProvider("Corner Selection Preview")
+    #     # self.inpainter = Inpainter()
+    #     # self.foreground_remover = Segmentor()
+        
+
+    def set_next(self, step):
+        self._next_step = step
+    
 
     def process(self, image: np.ndarray) -> np.ndarray:
+        skip_step = False
+        
+        skip_step_handler = SkipStepHandler(skip_step)
+        corner_provider_handler = CornerProviderHandler()
+        foreground_remover_handler = ForegroundRemoverHandler()
+        idealize_colors_handler = IdealizeColorsHandler()
+        inpainter_handler = InpainterHandler()
+        final_handler = FinalHandler()
+
+        skip_step_handler.set_successor(corner_provider_handler)
+        corner_provider_handler.set_successor(foreground_remover_handler)
+        foreground_remover_handler.set_successor(idealize_colors_handler)
+        idealize_colors_handler.set_successor(inpainter_handler)
+        inpainter_handler.set_successor(final_handler)
+
+        result = final_handler.handle(image)
+        return result
+
+
+class ImageHandler:
+    def __init__(self, successor=None):
+        self._successor = successor
+
+    def set_successor(self, successor):
+        self._successor = successor
+
+    def handle(self, image):
+        raise NotImplementedError()
+    
+class SkipStepHandler(ImageHandler):
+    def __init__(self, skip_condition: bool, successor: ImageHandler = None):
+        super().__init__(successor)
+        self._skip_condition = skip_condition
+    
+    def handle(self, image: np.ndarray) -> np.ndarray:
+        if self._skip_condition:
+            return image
+        else:
+            return self._successor.handle(image)
+        
+class CornerProviderHandler(ImageHandler):
+    def __init__(self):
+        self.corner_provider = CornerProvider(gui_window_name="test")
+    def handle(self, image):
         self.corner_provider.update(image)
         corners = self.corner_provider.get_corners()
         whiteboard = quadrilateral_to_rectangle(image, corners)
-        foreground_mask = self.foreground_remover.segment(whiteboard)
+        return self._successor.handle(whiteboard)
+
+class ForegroundRemoverHandler(ImageHandler):
+    def __init__(self):
+        self.foreground_remover = Segmentor()
+    def handle(self, image):
+        foreground_mask = self.foreground_remover.segment(image)
+        return self._successor.handle((image, foreground_mask))
+
+class IdealizeColorsHandler(ImageHandler):
+    def __init__(self, successor=None):
+        super().__init__(successor)
+    def handle(self, data):
+        whiteboard, foreground_mask = data
         whiteboard = idealize_colors(whiteboard, IdealizeColorsMode.MASKING)
+        return self._successor.handle((whiteboard, foreground_mask))
+
+class InpainterHandler(ImageHandler):
+    def __init__(self):
+        self.inpainter = Inpainter()
+    def handle(self, data):
+        whiteboard, foreground_mask = data
         whiteboard = self.inpainter.inpaint_missing(whiteboard, foreground_mask)
         return whiteboard
-
+    
+class FinalHandler (ImageHandler):
+    def __init__(self, successor=None):
+        super().__init__(successor)
+    def handle(self, image):
+        return image
 
 def quadrilateral_to_rectangle(
     image: np.ndarray, corners: Dict[str, Tuple[int, int]]
