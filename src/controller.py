@@ -1,7 +1,7 @@
 import cv2
 from typing import Any
 from pathlib import Path
-from .pipeline.pipeline import Pipeline
+from .pipeline.pipeline import Pipeline, avg_bgr
 from .current_whiteboard import CurrentWhiteboard
 from .bufferless_video_capture import BufferlessVideoCapture
 from .helper import try_int_to_string
@@ -18,27 +18,36 @@ class Controller:
         if not self.cap.is_opened():
             print("Can't open camera")
             exit()
-        while True:
-            ret, image = self.cap.read()
-            if not ret:
-                print("Can't receive frame (stream end?). Exiting ...")
-                break
 
-            self.latest_whiteboard.set_whiteboard(self.pipeline.process(image))
+        else:
+            # Read and process the first frame to calculate the average B, G, R values
+            frame = cap.read()
+            avg_b = cv2.mean(frame[:,:,0])[0]
+            avg_g = cv2.mean(frame[:,:,1])[0]
+            avg_r = cv2.mean(frame[:,:,2])[0]
+            avg_color = avg_bgr(avg_b, avg_g, avg_r)
 
-            cv2.imshow("preview", self.latest_whiteboard.get_whiteboard())  # type: ignore
+            while True:
+                ret, image = self.cap.read()
+                if not ret:
+                    print("Can't receive frame (stream end?). Exiting ...")
+                    break
 
-            pressed_key = cv2.waitKey(1)
+                self.latest_whiteboard.set_whiteboard(self.pipeline.process(image, avg_color))
 
-            if pressed_key == ord("q"):  # type: ignore
-                break
-            if pressed_key == ord("p"):  # type: ignore
-                self.latest_whiteboard.save_whiteboard("whiteboard")
+                cv2.imshow("preview", self.latest_whiteboard.get_whiteboard())  # type: ignore
 
-            is_cornerview_closed = cv2.getWindowProperty("Corner Selection Preview", cv2.WND_PROP_VISIBLE) < 1
-            is_preview_closed = cv2.getWindowProperty("preview", cv2.WND_PROP_VISIBLE) < 1
-            if is_cornerview_closed or is_preview_closed:
-                break
+                pressed_key = cv2.waitKey(1)
 
-        self.latest_whiteboard.save_whiteboard("closing_whiteboard")
-        cv2.destroyAllWindows()  # type: ignore
+                if pressed_key == ord("q"):  # type: ignore
+                    break
+                if pressed_key == ord("p"):  # type: ignore
+                    self.latest_whiteboard.save_whiteboard("whiteboard")
+
+                is_cornerview_closed = cv2.getWindowProperty("Corner Selection Preview", cv2.WND_PROP_VISIBLE) < 1
+                is_preview_closed = cv2.getWindowProperty("preview", cv2.WND_PROP_VISIBLE) < 1
+                if is_cornerview_closed or is_preview_closed:
+                    break
+
+            self.latest_whiteboard.save_whiteboard("closing_whiteboard")
+            cv2.destroyAllWindows()  # type: ignore

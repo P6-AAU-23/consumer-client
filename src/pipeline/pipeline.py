@@ -15,11 +15,12 @@ class Pipeline:
         self.inpainter = Inpainter()
         self.foreground_remover = Segmentor()
 
-    def process(self, image: np.ndarray) -> np.ndarray:
+    def process(self, image: np.ndarray, avg_color: avg_bgr) -> np.ndarray:
         self.corner_provider.update(image)
         corners = self.corner_provider.get_corners()
         whiteboard = quadrilateral_to_rectangle(image, corners)
         foreground_mask = self.foreground_remover.segment(whiteboard)
+        whiteboard = color_adjust(whiteboard, avg_color) # insert param
         whiteboard = idealize_colors(whiteboard, IdealizeColorsMode.MASKING)
         whiteboard = self.inpainter.inpaint_missing(whiteboard, foreground_mask)
         return whiteboard
@@ -64,6 +65,57 @@ def remove_foreground(image: np.ndarray) -> np.ndarray:
 class IdealizeColorsMode(Enum):
     MASKING = 1
     ASSIGN_EXTREME = 2
+
+class avg_bgr:
+    def __init__(self, avg_b: float, avg_g: float, avg_r: float):
+        self.b = avg_b
+        self.g = avg_g
+        self.r = avg_r
+
+    def white_balance(self, image: np.ndarray) -> np.ndarray:
+        # Split channels
+        blue, green, red = cv2.split(image)
+
+        # Calculate scaling factors for each channel
+        scale_b = self.g / self.b
+        scale_r = self.g / self.r
+
+        # Apply scaling factors to each channel
+        blue = cv2.convertScaleAbs(blue, alpha=scale_b)
+        red = cv2.convertScaleAbs(red, alpha=scale_r)
+
+        # Merge channels
+        result = cv2.merge((blue, green, red))
+        return result
+
+
+def color_adjust(image: np.ndarray, avg_color: avg_bgr, saturate_input: float, bright_input: int) -> np.ndarray:
+    """
+    Apply white balancing to an input image using a pre-calculated average of B, G, R channels.
+    Also Applying saturation, brightness, and normalization.
+
+    :param image: Input image as a numpy array.
+    :type image: numpy.ndarray
+    :return: Color adjusted image as a numpy array.
+    :rtype: numpy.ndarray
+    """
+
+    # Applying white balancing
+    result = avg_color.white_balance(image)
+
+    # Up saturation & brightness
+    saturation_boost = saturate_input
+    brightness = bright_input
+
+    result = cv2.cvtColor(result, cv2.COLOR_BGR2HSV)
+    result[:, :, 1] = cv2.convertScaleAbs(result[:, :, 1], alpha=saturation_boost)
+    result[:, :, 2] = cv2.add(result[:, :, 2], brightness)
+    result = cv2.cvtColor(result, cv2.COLOR_HSV2BGR)
+
+    # Normalize image
+    result = cv2.normalize(result, None, 0, 255, cv2.NORM_MINMAX)
+
+    return result
 
 
 def idealize_colors(image: np.ndarray, mode: IdealizeColorsMode) -> np.ndarray:
