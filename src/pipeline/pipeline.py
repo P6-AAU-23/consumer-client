@@ -15,12 +15,12 @@ class Pipeline:
         self.inpainter = Inpainter()
         self.foreground_remover = Segmentor()
 
-    def process(self, image: np.ndarray, avg_color: avg_bgr) -> np.ndarray:
+    def process(self, image: np.ndarray, avg_color, sat: float, bright: int) -> np.ndarray:
         self.corner_provider.update(image)
         corners = self.corner_provider.get_corners()
         whiteboard = quadrilateral_to_rectangle(image, corners)
         foreground_mask = self.foreground_remover.segment(whiteboard)
-        whiteboard = color_adjust(whiteboard, avg_color) # insert param
+        whiteboard = color_adjust(whiteboard, avg_color, sat, bright)
         whiteboard = idealize_colors(whiteboard, IdealizeColorsMode.MASKING)
         whiteboard = self.inpainter.inpaint_missing(whiteboard, foreground_mask)
         return whiteboard
@@ -66,7 +66,7 @@ class IdealizeColorsMode(Enum):
     MASKING = 1
     ASSIGN_EXTREME = 2
 
-class avg_bgr:
+class Avg_bgr:
     def __init__(self, avg_b: float, avg_g: float, avg_r: float):
         self.b = avg_b
         self.g = avg_g
@@ -89,7 +89,7 @@ class avg_bgr:
         return result
 
 
-def color_adjust(image: np.ndarray, avg_color: avg_bgr, saturate_input: float, bright_input: int) -> np.ndarray:
+def color_adjust(image: np.ndarray, avg_color, saturate_input: float, bright_input: int) -> np.ndarray:
     """
     Apply white balancing to an input image using a pre-calculated average of B, G, R channels.
     Also Applying saturation, brightness, and normalization.

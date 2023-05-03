@@ -97,3 +97,9 @@ def try_int_to_string(s: str) -> str | int:
         return int(s)
     except ValueError:
         return s
+
+def try_float_to_string(s: str) -> str | float:
+    try:
+        return float(s)
+    except ValueError:
+        return s
