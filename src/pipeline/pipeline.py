@@ -1,4 +1,5 @@
 import cv2
+import math
 import numpy as np
 from enum import Enum, auto
 
@@ -142,6 +143,46 @@ def binarize(image: np.ndarray) -> np.ndarray:
     binary_image = cv2.bitwise_not(binary_image)  # type: ignore
     return binary_image
 
+class AdaptiveSignificantPeakFilter:
+
+    def __init__(self) -> None:  # noqa: N803
+        self._significant_change_filter1 = MeanAdaptiveSignificantChangeFilter(2, 2)
+        self._significant_change_filter2 = SignificantChangeFilter(0, 0.005)
+        self._peak_filter = DelayedPeakFilter()
+
+    def filter(self, image: np.ndarray) -> Optional[np.ndarray]:
+        _image = self._significant_change_filter1.filter(image)
+        if _image is not None:
+            _image = self._significant_change_filter2.filter(_image)
+        if _image is not None:
+            return self._peak_filter.filter(_image)
+        return None
+
+
+class RunningStats:
+    def __init__(self):
+        self.count = 0
+        self.mean = 0
+        self.M2 = 0
+
+    def update(self, x):
+        self.count += 1
+        delta = x - self.mean
+        self.mean += delta / self.count
+        delta2 = x - self.mean
+        self.M2 += delta * delta2
+
+    def get_mean(self):
+        return self.mean
+
+    def get_variance(self):
+        if self.count < 2:
+            return float('nan')
+        return self.M2 / (self.count - 1)
+
+    def get_standard_deviation(self):
+        return math.sqrt(self.get_variance())
+
 
 class SignificantPeakFilter:
     """
@@ -181,6 +222,62 @@ class SignificantPeakFilter:
         if _image is None:
             return None
         return self._peak_filter.filter(_image)
+
+class σAdaptiveSignificantChangeFilter:
+    def __init__(self, climbing_sensitivity: float, descending_sensitivity: float):
+        self._significant_change_filter = SignificantChangeFilter(1, 1)
+        self._last_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
+        self._stats = RunningStats() 
+        self._climbing_sensitivity = climbing_sensitivity
+        self._descending_sensitivity = descending_sensitivity
+
+    def filter(self, image: np.ndarray) -> Optional[np.ndarray]:
+        abs_Δ_fullness = abs(fullness(image) - fullness(self._last_image))  # noqa: N806
+        self._stats.update(abs_Δ_fullness)
+        self._significant_change_filter._climbing_Δ_threshold = self._climbing_sensitivity * self._stats.get_standard_deviation()
+        self._significant_change_filter._descending_Δ_threshold = self._descending_sensitivity* self._stats.get_standard_deviation()
+        self._last_image = image
+        return self._significant_change_filter.filter(image)
+
+
+class MeanAdaptiveSignificantChangeFilter:
+    def __init__(self, climbing_sensitivity: float, descending_sensitivity: float):
+        self._significant_change_filter = SignificantChangeFilter(1, 1)
+        self._mean_Δ_fullness = 0
+        self._count = 0
+        self._last_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
+        self._climbing_sensitivity = climbing_sensitivity
+        self._descending_sensitivity = descending_sensitivity
+
+    def filter(self, image: np.ndarray) -> Optional[np.ndarray]:
+        self._count += 1
+        abs_Δ_fullness = abs(fullness(image) - fullness(self._last_image))  # noqa: N806
+        Δ = abs_Δ_fullness - self._mean_Δ_fullness
+        self._mean_Δ_fullness += (Δ / self._count)
+        self._significant_change_filter._climbing_Δ_threshold = self._climbing_sensitivity * self._mean_Δ_fullness
+        self._significant_change_filter._descending_Δ_threshold = self._descending_sensitivity* self._mean_Δ_fullness
+        self._last_image = image
+        print(self._mean_Δ_fullness)
+        return self._significant_change_filter.filter(image)
+
+
+class EmaAdaptiveSignificantChangeFilter:
+    def __init__(self, N: float, climbing_sensitivity: float, descending_sensitivity: float):
+        self._significant_change_filter = SignificantChangeFilter(1, 1)
+        self._ema_Δ_fullness = 0
+        self._last_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
+        self._α = 2 / (N + 1)
+        self._climbing_sensitivity = climbing_sensitivity
+        self._descending_sensitivity = descending_sensitivity
+
+    def filter(self, image: np.ndarray) -> Optional[np.ndarray]:
+        abs_Δ_fullness = abs(fullness(image) - fullness(self._last_image))  # noqa: N806
+        self._ema_Δ_fullness = (1 - self._α) * self._ema_Δ_fullness + self._α * abs_Δ_fullness
+        self._significant_change_filter._climbing_Δ_threshold = self._climbing_sensitivity * self._ema_Δ_fullness
+        self._significant_change_filter._descending_Δ_threshold = self._descending_sensitivity * self._ema_Δ_fullness
+        self._last_image = image
+        print(self._ema_Δ_fullness)
+        return self._significant_change_filter.filter(image)
 
 
 class SignificantChangeFilter:
@@ -255,7 +352,6 @@ class DelayedPeakFilter:
 
     def __init__(self):
         self._last_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
-        self._last_peak = self._last_image
         self._mode = self.Mode.CLIMBING
 
     def filter(self, image: np.ndarray) -> Optional[np.ndarray]:

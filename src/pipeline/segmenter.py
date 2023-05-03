@@ -48,5 +48,14 @@ class Segmentor:
 
         mask = cv.inRange(prediction_in_numpy, 0, 0)
         mask = dilate_black_regions(mask, iterations=11)
+        # mask = process_mask(mask)
 
         return mask
+
+
+def process_mask(mask):
+    # Check if there is any black pixel in the mask
+    if np.any(mask == 0):
+        # Set all the pixels in the mask to black
+        mask.fill(0)
+    return mask

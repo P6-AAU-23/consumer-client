@@ -1,7 +1,7 @@
 import cv2
 from typing import Any
 from pathlib import Path
-from .pipeline.pipeline import Pipeline, SignificantPeakFilter
+from .pipeline.pipeline import Pipeline, AdaptiveSignificantPeakFilter, SignificantPeakFilter
 from .current_whiteboard import CurrentWhiteboard
 from .bufferless_video_capture import BufferlessVideoCapture
 from .helper import try_int_to_string
@@ -13,7 +13,7 @@ class Controller:
         self.cap = BufferlessVideoCapture(try_int_to_string(args.video_capture_address))
         self.latest_whiteboard = CurrentWhiteboard(Path(args.saved_path))
         self.pipeline = Pipeline()
-        self._significant_peak_filter = SignificantPeakFilter(0, 0.005)
+        self._significant_peak_filter = SignificantPeakFilter(0.001, 0.005)
 
     def run(self) -> None:
         if not self.cap.is_opened():
@@ -29,10 +29,11 @@ class Controller:
             self.latest_whiteboard.set_whiteboard(whiteboard)
             whiteboard = self._significant_peak_filter.filter(whiteboard)
             if whiteboard is not None:
-                self.latest_whiteboard.save_whiteboard
+                # self.latest_whiteboard.save_whiteboard
+                cv2.imshow("I SAVED THIS", self.latest_whiteboard.get_whiteboard())  # type: ignore
+
 
             cv2.imshow("preview", self.latest_whiteboard.get_whiteboard())  # type: ignore
-
             pressed_key = cv2.waitKey(1)
 
             if pressed_key == ord("q"):  # type: ignore
