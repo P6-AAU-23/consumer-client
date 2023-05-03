@@ -2,10 +2,11 @@ import cv2
 import torch
 import numpy as np
 from enum import Enum
-from ..helper import distance
+from ..helper import distance, binarize, apply_mask
 from typing import Dict, Tuple
 from torchvision import transforms
 from ..helper import dilate_black_regions
+
 
 class IdealizeColorsMode(Enum):
     MASKING = 1
@@ -77,22 +78,6 @@ def idealize_colors_assign_extreme(image: np.ndarray) -> np.ndarray:
     return recolored_image
 
 
-def apply_mask(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
-    masked_image = cv2.bitwise_and(image, image, mask=mask)  # type: ignore
-    masked_image[mask == 0] = 255  # make the masked area white
-    return masked_image
-
-
-def binarize(image: np.ndarray) -> np.ndarray:
-    image_grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # type: ignore
-    binary_image = cv2.adaptiveThreshold(  # type: ignore
-        image_grey, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 4  # type: ignore
-    )
-    binary_image = cv2.medianBlur(binary_image, 3)  # type: ignore
-    binary_image = cv2.bitwise_not(binary_image)  # type: ignore
-    return binary_image
-
-
 def scale_saturation(image: np.ndarray, amount: float) -> np.ndarray:
     hsv_image = cv2.cvtColor(image, cv2.COLOR_BGRA2HSV)  # type: ignore
     # Increase the saturation by amount%
@@ -111,6 +96,7 @@ def inpaint_missing(
         image (np.ndarray): A numpy array representing the input image.
         missing_mask (np.ndarray): A numpy array representing the binary mask indicating missing regions
                                     (0 for missing regions, non-zero for existing regions).
+        last_image (cv2.Mat): A Mat array repqresenting the last used image
 
     Raises:
         ValueError: If the input image and missing_mask have different height and width.
@@ -141,7 +127,7 @@ def inpaint_missing(
     return inpainted_image
 
 
-def segment(torch_model, img: np.ndarray) -> np.ndarray:
+def segment(torch_model: any, img: np.ndarray) -> np.ndarray:
     input_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     preprocess = transforms.Compose(
         [
