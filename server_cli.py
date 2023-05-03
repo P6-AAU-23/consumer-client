@@ -7,6 +7,8 @@ def parse_args() -> any:
     parser = argparse.ArgumentParser()
     parser.add_argument("--video_capture_address", nargs="?", default=0)
     parser.add_argument("--saved_path", nargs="?", default=os.getcwd())
+    parser.add_argument("--saturation", nargs="?", default=1.0)
+    parser.add_argument("--brightness", nargs="?", default=0)
     return parser.parse_args()
 
 

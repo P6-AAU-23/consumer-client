@@ -31,6 +31,20 @@ def parse_args() -> any:
         help="Choose the folder where you want to save the whiteboards"
     )
 
+    parser.add_argument(
+        "--saturation", nargs="?",
+        widget="TextField",
+        default=1.00,
+        help="Add saturation multiplier fx. 1.5"
+    )
+
+    parser.add_argument(
+        "--brightness", nargs="?",
+        widget="TextField",
+        default=0,
+        help="Add more brightness fx 50"
+    )
+
     return parser.parse_args()
 
 
