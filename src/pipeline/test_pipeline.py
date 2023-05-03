@@ -1,4 +1,4 @@
-from .pipeline import quadrilateral_to_rectangle
+from .pipeline_functions import quadrilateral_to_rectangle
 import numpy as np
 import cv2
 
