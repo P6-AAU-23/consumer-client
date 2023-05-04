@@ -1,5 +1,6 @@
 import os
 import cv2
+from enum import Enum
 import numpy as np
 from typing import Tuple
 from pathlib import Path
@@ -113,3 +114,8 @@ def apply_mask(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
     masked_image = cv2.bitwise_and(image, image, mask=mask)  # type: ignore
     masked_image[mask == 0] = 255  # make the masked area white
     return masked_image
+
+
+class IdealizeColorsMode(Enum):
+    MASKING = 1
+    ASSIGN_EXTREME = 2
