@@ -1,6 +1,7 @@
 import cv2
 import torch
 import numpy as np
+from enum import Enum
 from typing import Dict, Tuple
 from torchvision import transforms
 from ..helper import dilate_black_regions
@@ -67,10 +68,10 @@ class CornerProviderHandler(ImageHandler):
         corners = self.corner_provider.get_corners()
         whiteboard = self.quadrilateral_to_rectangle(image, corners)
         return self._successor.handle(whiteboard)
-    
+
     def quadrilateral_to_rectangle(
-        image: np.ndarray, corners: Dict[str, Tuple[int, int]]
-        ) -> np.ndarray:
+            self, image: np.ndarray, corners: Dict[str, Tuple[int, int]]
+    ) -> np.ndarray:
         """Warps a quadrilateral region in the input image into a rectangular shape using a perspective transformation.
 
         Args:
@@ -94,7 +95,9 @@ class CornerProviderHandler(ImageHandler):
             [(0, 0), (max_width, 0), (max_width, max_height), (0, max_height)],
             dtype=np.float32,
         )
-        quad_to_rect_transform = cv2.getPerspectiveTransform(np.float32(list(corners.values())), target_corners)  # type: ignore
+        quad_to_rect_transform = cv2.getPerspectiveTransform(  # type: ignore
+            np.float32(list(corners.values())), target_corners
+        )
         out = cv2.warpPerspective(image, quad_to_rect_transform, (max_width, max_height))  # type: ignore
         return out
 
@@ -114,7 +117,7 @@ class ForegroundRemoverHandler(ImageHandler):
     def handle(self, image: cv2.Mat) -> cv2.Mat:
         foreground_mask = self.segment(self.torch_model, image)
         return self._successor.handle((image, foreground_mask))
-    
+
     def segment(self, img: np.ndarray) -> np.ndarray:
         input_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         preprocess = transforms.Compose(
@@ -137,7 +140,7 @@ class ForegroundRemoverHandler(ImageHandler):
             self.torch_model.to("cuda")
 
         with torch.no_grad():
-            output = torch_model(input_batch)["out"][0]
+            output = self.torch_model(input_batch)["out"][0]
         output_predictions = output.argmax(0)
 
         prediction_in_numpy = output_predictions.byte().cpu().numpy()
@@ -149,6 +152,11 @@ class ForegroundRemoverHandler(ImageHandler):
 
 
 class IdealizeColorsHandler(ImageHandler):
+
+    class IdealizeColorsMode(Enum):
+        MASKING = 1
+        ASSIGN_EXTREME = 2
+
     def __init__(self, successor: ImageHandler = None):
         super().__init__(successor)
 
@@ -156,7 +164,7 @@ class IdealizeColorsHandler(ImageHandler):
         whiteboard, foreground_mask = data
         whiteboard = self.idealize_colors(whiteboard, IdealizeColorsMode.MASKING)
         return self._successor.handle((whiteboard, foreground_mask))
-    
+
     def idealize_colors(self, image: np.ndarray, mode: IdealizeColorsMode) -> np.ndarray:
         if mode == IdealizeColorsMode.MASKING:
             return self.idealize_colors_masking(image)
@@ -165,14 +173,12 @@ class IdealizeColorsHandler(ImageHandler):
         else:
             return image
 
-
-    def idealize_colors_masking(image: np.ndarray) -> np.ndarray:
+    def idealize_colors_masking(self, image: np.ndarray) -> np.ndarray:
         mask = binarize(image)
         masked_image = apply_mask(image, mask)
         return masked_image
 
-
-    def idealize_colors_assign_extreme(image: np.ndarray) -> np.ndarray:
+    def idealize_colors_assign_extreme(self, image: np.ndarray) -> np.ndarray:
         threshold = 128
         max_val = 255
         # Split the image into B, G, and R channels
@@ -186,7 +192,6 @@ class IdealizeColorsHandler(ImageHandler):
         return recolored_image
 
 
-
 class InpainterHandler(ImageHandler):
     def __init__(self):
         self._last_image = None
@@ -196,10 +201,10 @@ class InpainterHandler(ImageHandler):
         whiteboard = self.inpaint_missing(whiteboard, foreground_mask, self._last_image)
         self._last_image = whiteboard
         return self._successor.handle(whiteboard)
-    
+
     def inpaint_missing(
-        image: np.ndarray, missing_mask: np.ndarray, last_image: cv2.Mat
-        ) -> np.ndarray:
+        self, image: np.ndarray, missing_mask: np.ndarray, last_image: cv2.Mat
+    ) -> np.ndarray:
         """Inpaints the missing regions in the input image using the provided binary mask,
         and the last image given to this function.
 
