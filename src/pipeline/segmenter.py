@@ -47,7 +47,7 @@ class Segmentor:
         prediction_in_numpy = output_predictions.byte().cpu().numpy()
 
         mask = cv.inRange(prediction_in_numpy, 0, 0)
-        mask = dilate_black_regions(mask, iterations=11)
+        mask = dilate_black_regions(mask, iterations=100)
 
         return mask
 
@@ -55,9 +55,10 @@ class AggressiveSegmentor:
     def __init__(self):
         self._segmentor = Segmentor()
 
-    def segment(self, image: cv2.Mat) -> cv2.Mat:  # type: ignore
+    def segment(self, image: np.ndarray) -> np.ndarray:  # type: ignore
         mask = self._segmentor.segment(image)
         # if any pixel in mask is black
         if np.any(mask == 0):
             # Set all the pixels in the mask to black
             mask.fill(0)
+        return mask

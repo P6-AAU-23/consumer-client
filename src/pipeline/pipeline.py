@@ -5,7 +5,7 @@ from enum import Enum, auto
 
 from ..helper import distance
 from typing import Dict, Optional, Tuple
-from .segmenter import Segmentor
+from .segmenter import AggressiveSegmentor, Segmentor
 from .inpainter import Inpainter
 from .corner_provider import CornerProvider
 

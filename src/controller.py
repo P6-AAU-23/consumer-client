@@ -2,7 +2,7 @@ import cv2
 from typing import Any
 from pathlib import Path
 from .pipeline.pipeline import (DelayedPeakFilter, MeanAdaptiveSignificantChangeFilter,
-                                Pipeline, σAdaptiveSignificantChangeFilter)
+                                Pipeline, SignificantChangeFilter, σAdaptiveSignificantChangeFilter)
 from .current_whiteboard import CurrentWhiteboard
 from .bufferless_video_capture import BufferlessVideoCapture
 from .helper import try_int_to_string
@@ -15,8 +15,8 @@ class Controller:
         self.latest_whiteboard = CurrentWhiteboard(Path(args.saved_path))
         self.peak_whiteboard = CurrentWhiteboard(Path(args.saved_path))
         self.pipeline = Pipeline()
-        self._change_filter1 = MeanAdaptiveSignificantChangeFilter(1, 1)
-        self._change_filter2 = σAdaptiveSignificantChangeFilter(0, 0.5)
+        self._change_filter1 = MeanAdaptiveSignificantChangeFilter(3, 3)
+        self._change_filter2 = σAdaptiveSignificantChangeFilter(0, 0.25)
         self._peak_filter = DelayedPeakFilter()
 
     def run(self) -> None:
@@ -30,6 +30,7 @@ class Controller:
                 break
 
             whiteboard = self.pipeline.process(image)
+            self.latest_whiteboard.set_whiteboard(whiteboard)  # type: ignore
             cv2.imshow("preview", self.latest_whiteboard.get_whiteboard())  # type: ignore
 
             whiteboard = self._change_filter1.filter(whiteboard)
@@ -39,6 +40,7 @@ class Controller:
                 whiteboard = self._peak_filter.filter(whiteboard)
             if whiteboard is not None:
                 self.peak_whiteboard.set_whiteboard(whiteboard)
+                cv2.imshow("I SAVED THIS", self.peak_whiteboard.get_whiteboard())  # type: ignore
                 self.peak_whiteboard.save_whiteboard("peak")
 
             pressed_key = cv2.waitKey(1)
