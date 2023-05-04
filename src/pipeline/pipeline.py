@@ -150,28 +150,28 @@ class RunningStats:
         self.mean = 0
         self.M2 = 0
 
-    def update(self, x):
+    def update(self, x: float) -> None:
         self.count += 1
         delta = x - self.mean
         self.mean += delta / self.count
         delta2 = x - self.mean
         self.M2 += delta * delta2
 
-    def get_mean(self):
+    def get_mean(self) -> float:
         return self.mean
 
-    def get_variance(self):
+    def get_variance(self) -> float:
         if self.count < 2:
             return float('nan')
         return self.M2 / (self.count - 1)
 
-    def get_standard_deviation(self):
+    def get_standard_deviation(self) -> float:
         return math.sqrt(self.get_variance())
 
 
-class σAdaptiveSignificantChangeFilter:
+class σAdaptiveSignificantChangeFilter:  # noqa: N801
     def __init__(self, σ_climbing_threshold: float, σ_descending_threshold: float):
-        self._stats = RunningStats() 
+        self._stats = RunningStats()
         self._significant_change_filter = SignificantChangeFilter(1, 1)
         self._last_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
         self._σ_climbing_threshold = σ_climbing_threshold
@@ -183,14 +183,14 @@ class σAdaptiveSignificantChangeFilter:
         self._significant_change_filter._climbing_Δ_threshold = \
             self._σ_climbing_threshold * self._stats.get_standard_deviation()
         self._significant_change_filter._descending_Δ_threshold = \
-            self._σ_descending_threshold* self._stats.get_standard_deviation()
+            self._σ_descending_threshold * self._stats.get_standard_deviation()
         self._last_image = image
         return self._significant_change_filter.filter(image)
 
 
 class MeanAdaptiveSignificantChangeFilter:
     def __init__(self, mean_climbing_threshold: float, mean_descending_threshold: float):
-        self._stats = RunningStats() 
+        self._stats = RunningStats()
         self._significant_change_filter = SignificantChangeFilter(1, 1)
         self._last_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
         self._mean_climbing_threshold = mean_climbing_threshold
@@ -202,17 +202,17 @@ class MeanAdaptiveSignificantChangeFilter:
         self._significant_change_filter._climbing_Δ_threshold = \
             self._mean_climbing_threshold * self._stats.get_mean()
         self._significant_change_filter._descending_Δ_threshold = \
-            self._mean_descending_threshold* self._stats.get_mean()
+            self._mean_descending_threshold * self._stats.get_mean()
         self._last_image = image
         return self._significant_change_filter.filter(image)
 
 
 class EmaAdaptiveSignificantChangeFilter:
-    def __init__(self, N: float, ema_climbing_threshold: float, ema_descending_threshold: float):
+    def __init__(self, window: float, ema_climbing_threshold: float, ema_descending_threshold: float):
         self._significant_change_filter = SignificantChangeFilter(1, 1)
         self._ema_Δ_fullness = 0
         self._last_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
-        self._α = 2 / (N + 1)
+        self._α = 2 / (window + 1)
         self._climbing_sensitivity = ema_climbing_threshold
         self._descending_sensitivity = ema_descending_threshold
 
