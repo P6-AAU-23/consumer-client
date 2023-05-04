@@ -50,3 +50,14 @@ class Segmentor:
         mask = dilate_black_regions(mask, iterations=11)
 
         return mask
+
+class AggressiveSegmentor:
+    def __init__(self):
+        self._segmentor = Segmentor()
+
+    def segment(self, image: cv2.Mat) -> cv2.Mat:  # type: ignore
+        mask = self._segmentor.segment(image)
+        # if any pixel in mask is black
+        if np.any(mask == 0):
+            # Set all the pixels in the mask to black
+            mask.fill(0)
