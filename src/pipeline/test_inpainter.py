@@ -1,5 +1,4 @@
 from .pipeline import InpainterHandler
-from .pipeline_functions import inpaint_missing
 import cv2
 import numpy as np
 
@@ -21,7 +20,7 @@ def test_inpaint_missing_inpaints_missing() -> None:
     inpainter._last_image = last_image
 
     # Act
-    actual = inpaint_missing(input, mask, inpainter._last_image)
+    actual = inpainter.inpaint_missing(input, mask, inpainter._last_image)
 
     # Assert
     assert np.array_equal(actual, expected)
@@ -41,7 +40,7 @@ def test_inpaint_missing_does_not_inpaint_if_no_missing() -> None:
     inpainter._last_image = last_image
 
     # Act
-    actual = inpaint_missing(input, mask, inpainter._last_image)
+    actual = inpainter.inpaint_missing(input, mask, inpainter._last_image)
 
     # Assert
     assert np.array_equal(actual, input)

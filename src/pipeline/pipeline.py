@@ -6,7 +6,12 @@ from typing import Dict, Tuple
 from torchvision import transforms
 from ..helper import dilate_black_regions
 from .corner_provider import CornerProvider
-from ..helper import distance, binarize, apply_mask, IdealizeColorsMode
+from ..helper import distance, binarize, apply_mask
+
+
+class IdealizeColorsMode(Enum):
+    MASKING = 1
+    ASSIGN_EXTREME = 2
 
 
 class Pipeline:
@@ -14,7 +19,7 @@ class Pipeline:
         self.start_handler = StartHandler()
         self.corner_provider_handler = CornerProviderHandler()
         self.foreground_remover_handler = ForegroundRemoverHandler()
-        self.idealize_colors_handler = IdealizeColorsHandler()
+        self.idealize_colors_handler = IdealizeColorsHandler(IdealizeColorsMode.MASKING)
         self.inpainter_handler = InpainterHandler()
         self.final_handler = FinalHandler()
 
@@ -115,10 +120,10 @@ class ForegroundRemoverHandler(ImageHandler):
         self.torch_model.eval()
 
     def handle(self, image: cv2.Mat) -> cv2.Mat:
-        foreground_mask = self.segment(self.torch_model, image)
+        foreground_mask = self.segment(image)
         return self._successor.handle((image, foreground_mask))
 
-    def segment(self, img: np.ndarray) -> np.ndarray:
+    def segment(self, img: cv2.Mat) -> cv2.Mat:
         input_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         preprocess = transforms.Compose(
             [
@@ -152,23 +157,19 @@ class ForegroundRemoverHandler(ImageHandler):
 
 
 class IdealizeColorsHandler(ImageHandler):
-
-    class IdealizeColorsMode(Enum):
-        MASKING = 1
-        ASSIGN_EXTREME = 2
-
-    def __init__(self, successor: ImageHandler = None):
+    def __init__(self, color_mode: IdealizeColorsMode, successor: ImageHandler = None):
+        self.IdealizeColorsMode = color_mode
         super().__init__(successor)
 
     def handle(self, data: tuple[cv2.Mat, cv2.Mat]) -> cv2.Mat:
         whiteboard, foreground_mask = data
-        whiteboard = self.idealize_colors(whiteboard, IdealizeColorsMode.MASKING)
+        whiteboard = self.idealize_colors(whiteboard, self.IdealizeColorsMode)
         return self._successor.handle((whiteboard, foreground_mask))
 
     def idealize_colors(self, image: np.ndarray, mode: IdealizeColorsMode) -> np.ndarray:
-        if mode == IdealizeColorsMode.MASKING:
+        if mode == self.IdealizeColorsMode.MASKING:
             return self.idealize_colors_masking(image)
-        if mode == IdealizeColorsMode.ASSIGN_EXTREME:
+        if mode == self.IdealizeColorsMode.ASSIGN_EXTREME:
             return self.idealize_colors_assign_extreme(image)
         else:
             return image
