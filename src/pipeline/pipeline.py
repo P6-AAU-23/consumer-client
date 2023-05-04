@@ -65,8 +65,8 @@ class StartHandler(ImageHandler):
 
 
 class CornerProviderHandler(ImageHandler):
-    def __init__(self):
-        self.corner_provider = CornerProvider(gui_window_name="Corner Selection Preview")
+    def __init__(self, use_gui: bool = True):
+        self.corner_provider = CornerProvider("Corner Selection Preview", use_gui)
 
     def handle(self, image: cv2.Mat) -> cv2.Mat:
         self.corner_provider.update(image)

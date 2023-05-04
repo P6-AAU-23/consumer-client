@@ -8,7 +8,7 @@ def test_warp_quadrilateral_to_rectangle_no_transformation() -> None:
     Tests the case when the input quadrilateral region is already a rectangle with the same size as the input image.
     In this case, the output should be the same as the input.
     """
-    corner_provider = CornerProviderHandler()
+    corner_provider = CornerProviderHandler(use_gui=False)
     image = np.zeros((100, 100, 3), dtype=np.uint8)
     cv2.rectangle(image, (25, 25), (75, 75), (255, 255, 255), -1)  # type: ignore
     corners = {
@@ -29,7 +29,7 @@ def test_quadrilateral_to_rectangle_known_transformation() -> None:
     that rectangular region. The test creates a 100x100 image with a white 50x50 rectangle centered in it and applies
     the perspective warp to extract the 50x50 rectangle. The result is then compared to a 50x50 image of a white rectangle.
     """
-    corner_provider = CornerProviderHandler()
+    corner_provider = CornerProviderHandler(use_gui=False)
     image = np.zeros((100, 100, 3), dtype=np.uint8)
     cv2.rectangle(image, (25, 25), (74, 74), (255, 255, 255), -1)  # type: ignore
     corners = {
