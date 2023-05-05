@@ -38,12 +38,12 @@ def write_path_with_date_and_time(name: str, path: Path) -> str:
 def write_path_with_unique_name(name: str, path: Path) -> str:
     """Generates a path with a unique name for an image you want to save.
 
-        Args:
-            name: Name of the file you want save.
-            path: The path to the location you want to save.
+    Args:
+        name: Name of the file you want save.
+        path: The path to the location you want to save.
 
-        Returns:
-            str: String of path with unique name
+    Returns:
+        str: String of path with unique name
     """
     full_name = name + ".jpg"
     full_path = path / full_name
@@ -61,7 +61,9 @@ def uniquify_file_name(path: str) -> str:
     return path
 
 
-def dilate_black_regions(binary_mask: np.ndarray, kernel_size: Tuple[int, int] = (3, 3), iterations: int = 1) -> np.ndarray:
+def dilate_black_regions(
+    binary_mask: np.ndarray, kernel_size: Tuple[int, int] = (3, 3), iterations: int = 1
+) -> np.ndarray:
     inverted_mask = cv2.bitwise_not(binary_mask)  # type: ignore
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernel_size)  # type: ignore
     dilated_inverted_mask = cv2.dilate(inverted_mask, kernel, iterations=iterations)  # type: ignore
@@ -70,7 +72,6 @@ def dilate_black_regions(binary_mask: np.ndarray, kernel_size: Tuple[int, int] =
 
 
 def list_ports() -> list[str]:
-
     dev_port = 0
     working_ports = []
     available_ports = []
