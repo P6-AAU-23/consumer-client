@@ -1,34 +1,34 @@
-from .pipeline_modules import *
+import argparse
+from .pipeline_modules import (
+    ColorIdealizer,
+    ForegroundRemover,
+    IdealizeColorsMode,
+    IdentityProcessor,
+    ImageProcessor,
+    Inpainter,
+    PerspectiveTransformer,
+)
 
 
-def pipeline_builder(args):
-    start_handler = StartHandler()
-    corner_provider_handler = CornerProviderHandler()
-    foreground_remover_handler = ForegroundRemoverHandler()
-    idealize_colors_handler = IdealizeColorsHandler(IdealizeColorsMode.MASKING)
-    inpainter_handler = InpainterHandler()
-    final_handler = FinalHandler()
+def pipeline_builder(args: argparse.Namespace) -> ImageProcessor:
+    start = IdentityProcessor()
+    perspective_transformer = PerspectiveTransformer()
+    foreground_remover_handler = ForegroundRemover()
+    idealize_colors_handler = ColorIdealizer(IdealizeColorsMode.MASKING)
+    inpainter_handler = Inpainter()
 
-    head = start_handler
+    head = start
 
     if not args.disable_transform_perspective:
-        head.set_successor(corner_provider_handler)
-        head = corner_provider_handler
+        head = head.set_next(perspective_transformer)
 
     if not args.disable_remove_foreground:
-        head.set_successor(foreground_remover_handler)
-        head = foreground_remover_handler
+        head = head.set_next(foreground_remover_handler)
 
-    
     if not args.disable_idealize_colors:
-        head.set_successor(idealize_colors_handler)
-        head = idealize_colors_handler
+        head = head.set_next(idealize_colors_handler)
 
     if not args.disable_remove_foreground:
-        head.set_successor(inpainter_handler)
-        head = inpainter_handler
+        head = head.set_next(inpainter_handler)
 
-
-    head.set_successor(final_handler)
-
-    return start_handler
+    return start

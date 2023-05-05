@@ -7,55 +7,56 @@ from torchvision import transforms
 from ..helper import dilate_black_regions, fullness
 from .corner_provider import CornerProvider
 from ..helper import distance, binarize, apply_mask
+from abc import ABC, abstractmethod
+
 
 class IdealizeColorsMode(Enum):
-    MASKING = 1
-    ASSIGN_EXTREME = 2
-
-class ImageHandler:
-    def __init__(self, successor: 'ImageHandler' = None):
-        self._successor = successor
-
-    def set_successor(self, successor: 'ImageHandler') -> None:
-        self._successor = successor
-
-    def handle(self, image: List[cv2.Mat]) -> List[cv2.Mat]:
-        raise NotImplementedError()
+    MASKING = auto()
+    ASSIGN_EXTREME = auto()
 
 
-class SkipStepHandler(ImageHandler):
-    def __init__(self, skip_condition: bool, successor: ImageHandler = None):
-        super().__init__(successor)
-        self._skip_condition = skip_condition
+class ImageProcessor(ABC):
+    def __init__(self):
+        self._next_processor = None
 
-    def handle(self, images: List[cv2.Mat]) -> List[cv2.Mat]:
-        if self._skip_condition:
-            return images
-        else:
-            return self._successor.handle(images)
+    def set_next(self, processor: "ImageProcessor") -> "ImageProcessor":
+        self._next_processor = processor
+        return processor
+
+    def process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        processed_image = self._process(image_layers)
+        if self._next_processor:
+            return self._next_processor.process(processed_image)
+        return processed_image
+
+    @abstractmethod
+    def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        pass
 
 
-class StartHandler(ImageHandler):
-    def __init__(self, successor: ImageHandler = None):
-        super().__init__(successor)
+class IdentityProcessor(ImageProcessor):
+    def __init__(self):
+        super().__init__()
 
-    def handle(self, images: List[cv2.Mat]) -> List[cv2.Mat]:
-        return self._successor.handle(images)
+    def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        return image_layers
 
 
-class CornerProviderHandler(ImageHandler):
+class PerspectiveTransformer(ImageProcessor):
     def __init__(self, use_gui: bool = True):
+        super().__init__()
         self.corner_provider = CornerProvider("Corner Selection Preview", use_gui)
 
-    def handle(self, images: List[cv2.Mat]) -> List[cv2.Mat]:
-        image = images[0]
-        self.corner_provider.update(image)
+    def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        self.corner_provider.update(image_layers["whiteboard"])
         corners = self.corner_provider.get_corners()
-        whiteboard = self.quadrilateral_to_rectangle(image, corners)
-        return self._successor.handle([image])
+        image_layers["whiteboard"] = self.quadrilateral_to_rectangle(
+            image_layers["whiteboard"], corners
+        )
+        return image_layers
 
     def quadrilateral_to_rectangle(
-            self, image: np.ndarray, corners: Dict[str, Tuple[int, int]]
+        self, image: np.ndarray, corners: Dict[str, Tuple[int, int]]
     ) -> np.ndarray:
         """Warps a quadrilateral region in the input image into a rectangular shape using a perspective transformation.
 
@@ -87,19 +88,20 @@ class CornerProviderHandler(ImageHandler):
         return out
 
 
-
-
-class IdealizeColorsHandler(ImageHandler):
-    def __init__(self, color_mode: IdealizeColorsMode, successor: ImageHandler = None):
+class ColorIdealizer(ImageProcessor):
+    def __init__(self, color_mode: IdealizeColorsMode):
+        super().__init__()
         self.IdealizeColorsMode = color_mode
-        super().__init__(successor)
 
-    def handle(self, images: List[cv2.Mat]) -> List[cv2.Mat]:
-        image = images[0]
-        images[0] = self.idealize_colors(image, self.IdealizeColorsMode)
-        return self._successor.handle(images)
+    def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        image_layers["whiteboard"] = self.idealize_colors(
+            image_layers["whiteboard"], self.IdealizeColorsMode
+        )
+        return image_layers
 
-    def idealize_colors(self, image: np.ndarray, mode: IdealizeColorsMode) -> np.ndarray:
+    def idealize_colors(
+        self, image: np.ndarray, mode: IdealizeColorsMode
+    ) -> np.ndarray:
         if mode == self.IdealizeColorsMode.MASKING:
             return self.idealize_colors_masking(image)
         if mode == self.IdealizeColorsMode.ASSIGN_EXTREME:
@@ -125,25 +127,22 @@ class IdealizeColorsHandler(ImageHandler):
         recolored_image = cv2.merge((b, g, r))  # type: ignore
         return recolored_image
 
-class ForegroundRemoverHandler(ImageHandler):
+
+class ForegroundRemover(ImageProcessor):
     def __init__(self):
-        # Alternative models
-        # torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet50', pretrained=True)
-        # torch.hub.load('pytorch/vision:v0.10.0', 'deeplabv3_resnet101', pretrained=True)
+        super().__init__()
         self.torch_model = torch.hub.load(
             "pytorch/vision:v0.10.0",
             "deeplabv3_mobilenet_v3_large",
-            weights="DeepLabV3_MobileNet_V3_Large_Weights.DEFAULT"
+            weights="DeepLabV3_MobileNet_V3_Large_Weights.DEFAULT",
         )
         self.torch_model.eval()
 
-    def handle(self, images: List[cv2.Mat]) -> List[cv2.Mat]:
-        image = images[0]
-        foreground_mask = self.segment(image)
-        images.append(foreground_mask)
-        return self._successor.handle(images)
+    def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        image_layers["foreground_mask"] = self.remove(image_layers["whiteboard"])
+        return image_layers
 
-    def segment(self, img: cv2.Mat) -> cv2.Mat:
+    def remove(self, img: np.ndarray) -> np.ndarray:
         input_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         preprocess = transforms.Compose(
             [
@@ -176,21 +175,20 @@ class ForegroundRemoverHandler(ImageHandler):
         return mask
 
 
-
-class InpainterHandler(ImageHandler):
+class Inpainter(ImageProcessor):
     def __init__(self):
+        super().__init__()
         self._last_image = None
 
-    def handle(self, images: List[cv2.Mat]) -> List[cv2.Mat]:
-        image = images[0]
-        foreground_mask = images[1]
-        whiteboard = self.inpaint_missing(image, foreground_mask, self._last_image)
-        self._last_image = whiteboard
-        return self._successor.handle([whiteboard])
+    def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        image_layers["whiteboard"] = self.inpaint_missing(
+            image_layers["whiteboard"], image_layers["foreground_mask"]
+        )
+        return image_layers
 
     def inpaint_missing(
-        self, image: np.ndarray, missing_mask: np.ndarray, last_image: cv2.Mat
-    ) -> cv2.Mat:
+        self, image: np.ndarray, missing_mask: np.ndarray
+    ) -> np.ndarray:
         """Inpaints the missing regions in the input image using the provided binary mask,
         and the last image given to this function.
 
@@ -198,7 +196,6 @@ class InpainterHandler(ImageHandler):
             image (np.ndarray): A numpy array representing the input image.
             missing_mask (np.ndarray): A numpy array representing the binary mask indicating missing regions
                                         (0 for missing regions, non-zero for existing regions).
-            last_image (List[cv2.Mat]): A Mat array repqresenting the last used image
 
         Raises:
             ValueError: If the input image and missing_mask have different height and width.
@@ -207,9 +204,9 @@ class InpainterHandler(ImageHandler):
             np.ndarray: A numpy array representing the inpainted image with missing regions filled.
         """
         # If last_image is not set or input image is different shape from last_image
-        if last_image is None or image.shape != last_image.shape:
+        if self._last_image is None or image.shape != self._last_image.shape:
             # Initialize last_image
-            last_image = np.ones(image.shape, dtype=np.uint8) * 255
+            self._last_image = np.ones(image.shape, dtype=np.uint8) * 255
         if image.shape[:2] != missing_mask.shape[:2]:
             raise ValueError(
                 "The input image and missing_mask must have the same height and width."
@@ -218,23 +215,15 @@ class InpainterHandler(ImageHandler):
         binary_mask = (missing_mask == 0).astype(np.uint8) * 255
         # Apply the mask to the last_image using bitwise operations
         masked_last_image = cv2.bitwise_and(  # type: ignore
-            last_image, last_image, mask=binary_mask
+            self._last_image, self._last_image, mask=binary_mask
         )
         # Invert the binary_mask to apply it to the input image
         inverted_binary_mask = cv2.bitwise_not(binary_mask)  # type: ignore
         masked_input = cv2.bitwise_and(image, image, mask=inverted_binary_mask)  # type: ignore
         # Combine the masked images to create the inpainted result
         inpainted_image = cv2.add(masked_input, masked_last_image)  # type: ignore
-        last_image = inpainted_image
+        self._last_image = inpainted_image
         return inpainted_image
-
-
-class FinalHandler (ImageHandler):
-    def __init__(self, successor: ImageHandler = None):
-        super().__init__(successor)
-
-    def handle(self, images: List[cv2.Mat]) -> List[cv2.Mat]:
-        return images
 
 
 class σAdaptiveSignificantChangeFilter:  # noqa: N801
@@ -393,4 +382,3 @@ class DelayedPeakFilter:
                 self._mode = self.Mode.DESCENDING
         self._last_image = image
         return output
-

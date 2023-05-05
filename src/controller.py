@@ -24,7 +24,11 @@ class Controller:
                 print("Can't receive frame (stream end?). Exiting ...")
                 break
 
-            self.latest_whiteboard.set_whiteboard(self.pipeline.handle([image])[0])
+
+            self.latest_whiteboard.set_whiteboard(
+                self.pipeline.process({"whiteboard": image})["whiteboard"]
+            )
+
             cv2.imshow("preview", self.latest_whiteboard.get_whiteboard())  # type: ignore
 
             pressed_key = cv2.waitKey(1)
@@ -34,8 +38,12 @@ class Controller:
             if pressed_key == ord("p"):  # type: ignore
                 self.latest_whiteboard.save_whiteboard("whiteboard")
 
-            is_cornerview_closed = cv2.getWindowProperty("Corner Selection Preview", cv2.WND_PROP_VISIBLE) < 1
-            is_preview_closed = cv2.getWindowProperty("preview", cv2.WND_PROP_VISIBLE) < 1
+            is_cornerview_closed = (
+                cv2.getWindowProperty("Corner Selection Preview", cv2.WND_PROP_VISIBLE) < 1
+            )
+            is_preview_closed = (
+                cv2.getWindowProperty("preview", cv2.WND_PROP_VISIBLE) < 1
+            )
             if is_cornerview_closed or is_preview_closed:
                 break
 
