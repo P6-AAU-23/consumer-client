@@ -1,10 +1,11 @@
+from pathlib import Path
 import cv2
 import numpy as np
 import torch
 from enum import Enum, auto
 from typing import Dict, Optional, Tuple, List
 from torchvision import transforms
-from ..helper import dilate_black_regions, fullness
+from ..helper import RunningStats, dilate_black_regions, fullness, write_path_with_date_and_time
 from .corner_provider import CornerProvider
 from ..helper import distance, binarize, apply_mask
 from abc import ABC, abstractmethod
@@ -224,6 +225,26 @@ class Inpainter(ImageProcessor):
         inpainted_image = cv2.add(masked_input, masked_last_image)  # type: ignore
         self._last_image = inpainted_image
         return inpainted_image
+
+
+class WipeSaver(ImageProcessor):
+    def __init__(self, path: str):
+        super().__init__()
+        self._path = Path(path)
+        self._n_filter = MeanAdaptiveSignificantChangeFilter(2, 2)
+        self._σ_filter = σAdaptiveSignificantChangeFilter(0, 0.25)
+        self._peak_filter = DelayedPeakFilter() 
+
+    def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        whiteboard = self._n_filter.filter(image_layers["whiteboard"])
+        if whiteboard is not None:
+            whiteboard = self._σ_filter.filter(image_layers["whiteboard"])
+        if whiteboard is not None:
+            whiteboard = self._peak_filter.filter(image_layers["whiteboard"])
+        if whiteboard is not None:
+            cv2.imshow("I SAVED THIS", whiteboard)  # type: ignore
+            cv2.imwrite(write_path_with_date_and_time("wipe", self._path), whiteboard)
+        return image_layers
 
 
 class σAdaptiveSignificantChangeFilter:  # noqa: N801
