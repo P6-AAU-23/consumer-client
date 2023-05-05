@@ -15,7 +15,7 @@ class Pipeline:
         self.inpainter = Inpainter()
         self.foreground_remover = Segmentor()
 
-    def process(self, image: np.ndarray, avg_color, sat: float, bright: int) -> np.ndarray:
+    def process(self, image: np.ndarray, avg_color: "Avg_bgr", sat: float, bright: int) -> np.ndarray:
         self.corner_provider.update(image)
         corners = self.corner_provider.get_corners()
         whiteboard = quadrilateral_to_rectangle(image, corners)
@@ -89,7 +89,7 @@ class Avg_bgr:
         return result
 
 
-def color_adjust(image: np.ndarray, avg_color, saturate_input: float, bright_input: int) -> np.ndarray:
+def color_adjust(image: cv2.Mat, avg_color: Avg_bgr, saturate_input: float, bright_input: int) -> cv2.Mat:
     """
     Apply white balancing to an input image using a pre-calculated average of B, G, R channels.
     Also Applying saturation, brightness, and normalization.
