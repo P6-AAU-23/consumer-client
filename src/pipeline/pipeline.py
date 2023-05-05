@@ -1,7 +1,16 @@
-from .pipeline_modules import *
+import argparse
+from .pipeline_modules import (
+    ColorIdealizer,
+    ForegroundRemover,
+    IdealizeColorsMode,
+    IdentityProcessor,
+    ImageProcessor,
+    Inpainter,
+    PerspectiveTransformer,
+)
 
 
-def pipeline_builder(args):
+def pipeline_builder(args: argparse.Namespace) -> ImageProcessor:
     start = IdentityProcessor()
     perspective_transformer = PerspectiveTransformer()
     foreground_remover_handler = ForegroundRemover()

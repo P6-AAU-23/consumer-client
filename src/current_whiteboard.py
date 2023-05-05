@@ -18,7 +18,9 @@ class CurrentWhiteboard:
         self.__latest_whiteboard = img
 
     def save_whiteboard(self, name: str) -> None:
-        cv2.imwrite(write_path_with_unique_name(name, self.__path), self.__latest_whiteboard)
+        cv2.imwrite(
+            write_path_with_unique_name(name, self.__path), self.__latest_whiteboard
+        )
 
     def get_path(self) -> Path:
         return self.__path
