@@ -171,7 +171,7 @@ class ForegroundRemover(ImageProcessor):
         prediction_in_numpy = output_predictions.byte().cpu().numpy()
 
         mask = cv2.inRange(prediction_in_numpy, 0, 0)
-        mask = dilate_black_regions(mask, iterations=11)
+        mask = dilate_black_regions(mask, iterations=100)
 
         return mask
 
