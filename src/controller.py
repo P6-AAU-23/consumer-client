@@ -1,8 +1,7 @@
 import cv2
 from typing import Any
 from pathlib import Path
-from .pipeline.pipeline import (DelayedPeakFilter, MeanAdaptiveSignificantChangeFilter,
-                                Pipeline, SignificantChangeFilter, σAdaptiveSignificantChangeFilter)
+from .pipeline.pipeline import pipeline_builder
 from .current_whiteboard import CurrentWhiteboard
 from .bufferless_video_capture import BufferlessVideoCapture
 from .helper import try_int_to_string
@@ -13,11 +12,7 @@ class Controller:
         self.args = args
         self.cap = BufferlessVideoCapture(try_int_to_string(args.video_capture_address))
         self.latest_whiteboard = CurrentWhiteboard(Path(args.saved_path))
-        self.peak_whiteboard = CurrentWhiteboard(Path(args.saved_path))
-        self.pipeline = Pipeline()
-        self._change_filter1 = MeanAdaptiveSignificantChangeFilter(3, 3)
-        self._change_filter2 = σAdaptiveSignificantChangeFilter(0, 0.25)
-        self._peak_filter = DelayedPeakFilter()
+        self.pipeline = pipeline_builder(args)
 
     def run(self) -> None:
         if not self.cap.is_opened():
@@ -29,19 +24,8 @@ class Controller:
                 print("Can't receive frame (stream end?). Exiting ...")
                 break
 
-            whiteboard = self.pipeline.process(image)
-            self.latest_whiteboard.set_whiteboard(whiteboard)  # type: ignore
+            self.latest_whiteboard.set_whiteboard(self.pipeline.handle([image])[0])
             cv2.imshow("preview", self.latest_whiteboard.get_whiteboard())  # type: ignore
-
-            whiteboard = self._change_filter1.filter(whiteboard)
-            if whiteboard is not None:
-                whiteboard = self._change_filter2.filter(whiteboard)
-            if whiteboard is not None:
-                whiteboard = self._peak_filter.filter(whiteboard)
-            if whiteboard is not None:
-                self.peak_whiteboard.set_whiteboard(whiteboard)
-                cv2.imshow("I SAVED THIS", self.peak_whiteboard.get_whiteboard())  # type: ignore
-                self.peak_whiteboard.save_whiteboard("peak")
 
             pressed_key = cv2.waitKey(1)
 
