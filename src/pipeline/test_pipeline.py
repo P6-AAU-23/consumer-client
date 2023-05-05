@@ -1,6 +1,5 @@
 from typing import Any
-from .pipeline import DelayedPeakFilter, SignificantChangeFilter
-from src.pipeline.pipeline_modules import PerspectiveTransformer
+from src.pipeline.pipeline_modules import DelayedPeakFilter, PerspectiveTransformer, SignificantChangeFilter
 import numpy as np
 import cv2
 import pytest
