@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import torch
 from enum import Enum, auto
-from typing import Dict, Optional, Tuple, List
+from typing import Dict, Optional, Tuple
 from torchvision import transforms
 from ..helper import RunningStats, dilate_black_regions, fullness, write_path_with_date_and_time
 from .corner_provider import CornerProvider
@@ -233,7 +233,7 @@ class WipeSaver(ImageProcessor):
         self._path = Path(path)
         self._n_filter = MeanAdaptiveSignificantChangeFilter(2, 2)
         self._σ_filter = σAdaptiveSignificantChangeFilter(0, 0.25)
-        self._peak_filter = DelayedPeakFilter() 
+        self._peak_filter = DelayedPeakFilter()
 
     def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
         whiteboard = self._n_filter.filter(image_layers["whiteboard"])

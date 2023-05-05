@@ -24,7 +24,6 @@ class Controller:
                 print("Can't receive frame (stream end?). Exiting ...")
                 break
 
-
             self.latest_whiteboard.set_whiteboard(
                 self.pipeline.process({"whiteboard": image})["whiteboard"]
             )
