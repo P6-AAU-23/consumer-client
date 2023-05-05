@@ -238,9 +238,9 @@ class WipeSaver(ImageProcessor):
     def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
         whiteboard = self._n_filter.filter(image_layers["whiteboard"])
         if whiteboard is not None:
-            whiteboard = self._σ_filter.filter(image_layers["whiteboard"])
+            whiteboard = self._σ_filter.filter(whiteboard)
         if whiteboard is not None:
-            whiteboard = self._peak_filter.filter(image_layers["whiteboard"])
+            whiteboard = self._peak_filter.filter(whiteboard)
         if whiteboard is not None:
             cv2.imshow("I SAVED THIS", whiteboard)  # type: ignore
             cv2.imwrite(write_path_with_date_and_time("wipe", self._path), whiteboard)
