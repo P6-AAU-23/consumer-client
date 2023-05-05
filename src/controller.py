@@ -24,7 +24,7 @@ class Controller:
                 print("Can't receive frame (stream end?). Exiting ...")
                 break
 
-            self.latest_whiteboard.set_whiteboard(self.pipeline.handle([image])[0])
+            self.latest_whiteboard.set_whiteboard(self.pipeline.process({"base":image})["whiteboard"])
 
             cv2.imshow("preview", self.latest_whiteboard.get_whiteboard())  # type: ignore
 
