@@ -1,10 +1,11 @@
+from pathlib import Path
 import cv2
 import numpy as np
 import torch
 from enum import Enum, auto
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 from torchvision import transforms
-from ..helper import dilate_black_regions
+from ..helper import RunningStats, dilate_black_regions, fullness, write_path_with_date_and_time
 from .corner_provider import CornerProvider
 from ..helper import distance, binarize, apply_mask
 from abc import ABC, abstractmethod
@@ -170,7 +171,7 @@ class ForegroundRemover(ImageProcessor):
         prediction_in_numpy = output_predictions.byte().cpu().numpy()
 
         mask = cv2.inRange(prediction_in_numpy, 0, 0)
-        mask = dilate_black_regions(mask, iterations=11)
+        mask = dilate_black_regions(mask, iterations=100)
 
         return mask
 
@@ -224,3 +225,181 @@ class Inpainter(ImageProcessor):
         inpainted_image = cv2.add(masked_input, masked_last_image)  # type: ignore
         self._last_image = inpainted_image
         return inpainted_image
+
+
+class WipeSaver(ImageProcessor):
+    def __init__(self, path: str):
+        super().__init__()
+        self._path = Path(path)
+        self._n_filter = MeanAdaptiveSignificantChangeFilter(2, 2)
+        self._σ_filter = σAdaptiveSignificantChangeFilter(0, 0.25)
+        self._peak_filter = DelayedPeakFilter()
+
+    def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        whiteboard = self._n_filter.filter(image_layers["whiteboard"])
+        if whiteboard is not None:
+            whiteboard = self._σ_filter.filter(whiteboard)
+        if whiteboard is not None:
+            whiteboard = self._peak_filter.filter(whiteboard)
+        if whiteboard is not None:
+            cv2.imshow("I SAVED THIS", whiteboard)  # type: ignore
+            cv2.imwrite(write_path_with_date_and_time("wipe", self._path), whiteboard)
+        return image_layers
+
+
+class σAdaptiveSignificantChangeFilter:  # noqa: N801
+    def __init__(self, σ_climbing_threshold: float, σ_descending_threshold: float):
+        self._stats = RunningStats()
+        self._significant_change_filter = SignificantChangeFilter(1, 1)
+        self._last_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
+        self._σ_climbing_threshold = σ_climbing_threshold
+        self._σ_descending_threshold = σ_descending_threshold
+
+    def filter(self, image: np.ndarray) -> Optional[np.ndarray]:
+        abs_Δ_fullness = abs(fullness(image) - fullness(self._last_image))  # noqa: N806
+        self._stats.update(abs_Δ_fullness)
+        self._significant_change_filter._climbing_Δ_threshold = \
+            self._σ_climbing_threshold * self._stats.get_standard_deviation()
+        self._significant_change_filter._descending_Δ_threshold = \
+            self._σ_descending_threshold * self._stats.get_standard_deviation()
+        self._last_image = image
+        return self._significant_change_filter.filter(image)
+
+
+class MeanAdaptiveSignificantChangeFilter:
+    def __init__(self, mean_climbing_threshold: float, mean_descending_threshold: float):
+        self._stats = RunningStats()
+        self._significant_change_filter = SignificantChangeFilter(1, 1)
+        self._last_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
+        self._mean_climbing_threshold = mean_climbing_threshold
+        self._mean_descending_threshold = mean_descending_threshold
+
+    def filter(self, image: np.ndarray) -> Optional[np.ndarray]:
+        abs_Δ_fullness = abs(fullness(image) - fullness(self._last_image))  # noqa: N806
+        self._stats.update(abs_Δ_fullness)
+        self._significant_change_filter._climbing_Δ_threshold = \
+            self._mean_climbing_threshold * self._stats.get_mean()
+        self._significant_change_filter._descending_Δ_threshold = \
+            self._mean_descending_threshold * self._stats.get_mean()
+        self._last_image = image
+        return self._significant_change_filter.filter(image)
+
+
+class EmaAdaptiveSignificantChangeFilter:
+    def __init__(self, window: float, ema_climbing_threshold: float, ema_descending_threshold: float):
+        self._significant_change_filter = SignificantChangeFilter(1, 1)
+        self._ema_Δ_fullness = 0
+        self._last_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
+        self._α = 2 / (window + 1)
+        self._climbing_sensitivity = ema_climbing_threshold
+        self._descending_sensitivity = ema_descending_threshold
+
+    def filter(self, image: np.ndarray) -> Optional[np.ndarray]:
+        abs_Δ_fullness = abs(fullness(image) - fullness(self._last_image))  # noqa: N806
+        self._ema_Δ_fullness = (1 - self._α) * self._ema_Δ_fullness + self._α * abs_Δ_fullness
+        self._significant_change_filter._climbing_Δ_threshold = \
+            self._climbing_sensitivity * self._ema_Δ_fullness
+        self._significant_change_filter._descending_Δ_threshold = \
+            self._descending_sensitivity * self._ema_Δ_fullness
+        self._last_image = image
+        return self._significant_change_filter.filter(image)
+
+
+class SignificantChangeFilter:
+    """
+    A filter that returns an image only if there is a significant change in its fullness.
+
+    The filter considers an image change as significant if the change in fullness surpasses a
+    predefined threshold. It maintains the last significant image and returns the current image
+    if the change is significant; otherwise, it returns None.
+
+    Attributes:
+        _climbing_Δ_threshold (float): Threshold for increasing fullness.
+        _descending_Δ_threshold (float): Threshold for decreasing fullness.
+        _last_significant_image (np.ndarray): The last significant image.
+    """
+
+    def __init__(self, climbing_Δ_threshold: float, descending_Δ_threshold: float) -> None:  # noqa:N803
+        """
+        Initialize the SignificantChangeFilter instance.
+
+        Args:
+            climbing_Δ_threshold (float): Threshold for increasing fullness (0 <= value <= 1).
+            descending_Δ_threshold (float): Threshold for decreasing fullness (0 <= value <= 1).
+        """
+        assert 0 <= climbing_Δ_threshold and climbing_Δ_threshold <= 1
+        assert 0 <= descending_Δ_threshold and descending_Δ_threshold <= 1
+        self._climbing_Δ_threshold = climbing_Δ_threshold
+        self._descending_Δ_threshold = descending_Δ_threshold
+        # Initialize last_image to a 10x10 white image
+        self._last_significant_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
+
+    def filter(self, image: np.ndarray) -> Optional[np.ndarray]:
+        """
+        Apply the significant change filter to the given image.
+
+        Args:
+            image (np.ndarray): The input image in BGR format.
+
+        Returns:
+            Optional[np.ndarray]: The input image if the change is significant, otherwise None.
+        """
+        Δ_fullness = fullness(image) - fullness(self._last_significant_image)  # noqa: N806
+        if Δ_fullness > 0:
+            Δ_fullness_threshold = self._climbing_Δ_threshold  # noqa: N806
+        elif Δ_fullness <= 0:
+            Δ_fullness_threshold = self._descending_Δ_threshold  # noqa: N806
+        if Δ_fullness_threshold < abs(Δ_fullness):
+            self._last_significant_image = image
+            return self._last_significant_image
+        return None
+
+
+class DelayedPeakFilter:
+    """
+    A filter that returns an image when it detects a peak in fullness after a delay.
+
+    The filter detects a peak in fullness by switching between two modes: climbing and descending.
+    When in climbing mode, the filter checks if the fullness of the current image is less than the
+    fullness of the previous image. If so, it switches to descending mode and returns the peak image.
+    In descending mode, it switches back to climbing mode when the fullness of the current image
+    becomes greater than the previous image.
+
+    Attributes:
+        _last_image (np.ndarray): The last image received by the filter.
+        _last_peak (np.ndarray): The last detected peak in fullness.
+        _mode (Mode): The current mode of the filter, either CLIMBING or DESCENDING.
+    """
+
+    class Mode(Enum):
+        CLIMBING = auto()
+        DESCENDING = auto()
+
+    def __init__(self):
+        self._last_image = np.ones((10, 10, 3), dtype=np.uint8) * 255
+        self._mode = self.Mode.CLIMBING
+
+    def filter(self, image: np.ndarray) -> Optional[np.ndarray]:
+        """
+        Apply the delayed peak filter to the given image.
+
+        Args:
+            image (np.ndarray): The input image in BGR format.
+
+        Returns:
+            Optional[np.ndarray]: The peak image when detected, otherwise None.
+        """
+        output = None
+        if self._mode is self.Mode.CLIMBING:
+            if fullness(self._last_image) <= fullness(image):
+                self._mode = self.Mode.CLIMBING
+            elif fullness(self._last_image) > fullness(image):
+                self._mode = self.Mode.DESCENDING
+                output = self._last_image
+        elif self._mode is self.Mode.DESCENDING:
+            if fullness(self._last_image) < fullness(image):
+                self._mode = self.Mode.CLIMBING
+            elif fullness(self._last_image) >= fullness(image):
+                self._mode = self.Mode.DESCENDING
+        self._last_image = image
+        return output

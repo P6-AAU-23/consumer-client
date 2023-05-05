@@ -7,6 +7,7 @@ from .pipeline_modules import (
     ImageProcessor,
     Inpainter,
     PerspectiveTransformer,
+    WipeSaver,
 )
 
 
@@ -16,6 +17,7 @@ def pipeline_builder(args: argparse.Namespace) -> ImageProcessor:
     foreground_remover_handler = ForegroundRemover()
     idealize_colors_handler = ColorIdealizer(IdealizeColorsMode.MASKING)
     inpainter_handler = Inpainter()
+    wipe_saver = WipeSaver(args.saved_path)
 
     head = start
 
@@ -30,5 +32,8 @@ def pipeline_builder(args: argparse.Namespace) -> ImageProcessor:
 
     if not args.disable_remove_foreground:
         head = head.set_next(inpainter_handler)
+
+    if args.save_on_wipe:
+        head = head.set_next(wipe_saver)
 
     return start
