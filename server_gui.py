@@ -11,7 +11,7 @@ def parse_args() -> any:
 
     setup = parser.add_argument_group()
     cam_choice = setup.add_mutually_exclusive_group(required=True)
-    
+
     cam_choice.add_argument(
         "--address",
         widget="TextField",
@@ -34,12 +34,11 @@ def parse_args() -> any:
         help="Choose the folder where you want to save the whiteboards",
     )
 
-    pipeline_modules= parser.add_argument_group()
+    pipeline_modules = parser.add_argument_group()
 
-    pipeline_modules.add_argument("--disable_remove_foreground", action= "store_true")
-    pipeline_modules.add_argument("--disable_transform_perspective", action= "store_true")
-    pipeline_modules.add_argument("--disable_idealize_colors", action= "store_true")
-
+    pipeline_modules.add_argument("--disable_remove_foreground", action="store_true")
+    pipeline_modules.add_argument("--disable_transform_perspective", action="store_true")
+    pipeline_modules.add_argument("--disable_idealize_colors", action="store_true")
 
     return parser.parse_args()
 
