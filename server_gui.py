@@ -39,6 +39,7 @@ def parse_args() -> any:
     pipeline_modules.add_argument("--disable_remove_foreground", action="store_true")
     pipeline_modules.add_argument("--disable_transform_perspective", action="store_true")
     pipeline_modules.add_argument("--disable_idealize_colors", action="store_true")
+    pipeline_modules.add_argument("--save_on_wipe", action="store_true")
 
     return parser.parse_args()
 
