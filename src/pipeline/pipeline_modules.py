@@ -48,10 +48,10 @@ class PerspectiveTransformer(ImageProcessor):
         self.corner_provider = CornerProvider("Corner Selection Preview", use_gui)
 
     def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
-        self.corner_provider.update(image_layers["base"])
+        self.corner_provider.update(image_layers["whiteboard"])
         corners = self.corner_provider.get_corners()
         image_layers["whiteboard"] = self.quadrilateral_to_rectangle(
-            image_layers["base"], corners
+            image_layers["whiteboard"], corners
         )
         return image_layers
 

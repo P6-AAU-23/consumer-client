@@ -25,7 +25,7 @@ class Controller:
                 break
 
             self.latest_whiteboard.set_whiteboard(
-                self.pipeline.process({"base": image})["whiteboard"]
+                self.pipeline.process({"whiteboard": image})["whiteboard"]
             )
 
             cv2.imshow("preview", self.latest_whiteboard.get_whiteboard())  # type: ignore
