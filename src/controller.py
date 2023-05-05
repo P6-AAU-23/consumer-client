@@ -1,7 +1,7 @@
 import cv2
 from typing import Any
 from pathlib import Path
-from .pipeline.pipeline import Pipeline
+from .pipeline.pipeline import pipeline_builder
 from .current_whiteboard import CurrentWhiteboard
 from .bufferless_video_capture import BufferlessVideoCapture
 from .helper import try_int_to_string
@@ -12,7 +12,7 @@ class Controller:
         self.args = args
         self.cap = BufferlessVideoCapture(try_int_to_string(args.video_capture_address))
         self.latest_whiteboard = CurrentWhiteboard(Path(args.saved_path))
-        self.pipeline = Pipeline()
+        self.pipeline = pipeline_builder(args)
 
     def run(self) -> None:
         if not self.cap.is_opened():
@@ -24,7 +24,9 @@ class Controller:
                 print("Can't receive frame (stream end?). Exiting ...")
                 break
 
-            self.latest_whiteboard.set_whiteboard(self.pipeline.process(image))
+            self.latest_whiteboard.set_whiteboard(
+                self.pipeline.process({"whiteboard": image})["whiteboard"]
+            )
 
             cv2.imshow("preview", self.latest_whiteboard.get_whiteboard())  # type: ignore
 
@@ -35,8 +37,12 @@ class Controller:
             if pressed_key == ord("p"):  # type: ignore
                 self.latest_whiteboard.save_whiteboard("whiteboard")
 
-            is_cornerview_closed = cv2.getWindowProperty("Corner Selection Preview", cv2.WND_PROP_VISIBLE) < 1
-            is_preview_closed = cv2.getWindowProperty("preview", cv2.WND_PROP_VISIBLE) < 1
+            is_cornerview_closed = (
+                cv2.getWindowProperty("Corner Selection Preview", cv2.WND_PROP_VISIBLE) < 1
+            )
+            is_preview_closed = (
+                cv2.getWindowProperty("preview", cv2.WND_PROP_VISIBLE) < 1
+            )
             if is_cornerview_closed or is_preview_closed:
                 break
 

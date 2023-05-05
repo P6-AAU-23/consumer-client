@@ -1,4 +1,4 @@
-from .inpainter import Inpainter
+from .pipeline import Inpainter
 import cv2
 import numpy as np
 
