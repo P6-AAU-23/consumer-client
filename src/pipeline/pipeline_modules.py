@@ -4,7 +4,7 @@ import torch
 from enum import Enum, auto
 from typing import Dict, Optional, Tuple, List
 from torchvision import transforms
-from ..helper import dilate_black_regions
+from ..helper import dilate_black_regions, fullness
 from .corner_provider import CornerProvider
 from ..helper import distance, binarize, apply_mask
 

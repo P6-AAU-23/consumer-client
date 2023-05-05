@@ -1,9 +1,6 @@
-<<<<<<< HEAD
 from typing import Any
-from .pipeline import DelayedPeakFilter, SignificantChangeFilter, quadrilateral_to_rectangle
-=======
+from .pipeline import DelayedPeakFilter, SignificantChangeFilter
 from .pipeline import CornerProviderHandler
->>>>>>> Moved-every-function-into-pipline_functions.py-and-pipeline-constuctor-into-pipeline.py
 import numpy as np
 import cv2
 import pytest
