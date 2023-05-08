@@ -46,7 +46,7 @@ def test_update(cp_initialized: CornerProvider) -> None:
 
 # test for bug #21
 def test_corner_outside_of_image_not_being_moved_resets_all_corners(
-    cp_initialized: CornerProvider
+    cp_initialized: CornerProvider,
 ) -> None:
     image = np.zeros((100, 200, 3), dtype=np.uint8)
     cp_initialized.corners["upper_left"] = (-1, -1)
