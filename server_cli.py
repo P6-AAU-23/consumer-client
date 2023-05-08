@@ -10,6 +10,7 @@ def parse_args() -> any:
     parser.add_argument("--saturation", nargs="?", default=1.0)
     parser.add_argument("--brightness", nargs="?", default=0)
     parser.add_argument("--disable_remove_foreground", action="store_true")
+    parser.add_argument("--disable_color_adjuster", action="store_true")
     parser.add_argument("--disable_transform_perspective", action="store_true")
     parser.add_argument("--disable_idealize_colors", action="store_true")
     parser.add_argument("--save_on_wipe", action="store_true")
