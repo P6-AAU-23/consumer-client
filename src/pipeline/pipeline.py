@@ -1,5 +1,5 @@
 import argparse
-from .helper import AvgBgr
+from ..helper import AvgBgr
 from .pipeline_modules import (
     ColorIdealizer,
     ColorAdjuster,
