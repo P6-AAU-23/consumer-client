@@ -1,6 +1,6 @@
 from typing import Any
 import pykka
-import time
+
 
 class Threadpool:
     def __init__(self, numberOfWorkers):
@@ -12,6 +12,7 @@ class Threadpool:
     def stop(self):
         for actor in self.actors:
             actor.stop
+
 
 class Slave(pykka.ThreadingActor):
     def __init__(self):
@@ -29,4 +30,3 @@ class Slave(pykka.ThreadingActor):
        # return None
     def stop(self):
         self.stop
-    

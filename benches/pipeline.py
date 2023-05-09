@@ -21,7 +21,17 @@ cv2.waitKey(1)
 import sys
 import cv2
 sys.path.append("{project_root}")
-from src.pipeline.pipeline import (IdentityProcessor, PerspectiveTransformer, ForegroundRemover, ColorAdjuster, ColorIdealizer, Inpainter, WipeSaver, IdealizeColorsMode)
+from src.pipeline.pipeline import 
+(
+    IdentityProcessor, 
+    PerspectiveTransformer, 
+    ForegroundRemover, 
+    ColorAdjuster, 
+    ColorIdealizer, 
+    Inpainter, 
+    WipeSaver, 
+    IdealizeColorsMode
+    )
 from src.helper import AvgBgr
 gc.enable()
 image = cv2.imread("{project_root}/resources/benchmark{i}.jpg")

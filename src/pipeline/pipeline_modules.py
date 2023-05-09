@@ -2,7 +2,7 @@ import cv2
 import torch
 import numpy as np
 from pathlib import Path
-from ..Africa import Slave
+from ..threadings import Slave
 from enum import Enum, auto
 from torchvision import transforms
 from abc import ABC, abstractmethod
