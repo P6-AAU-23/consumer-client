@@ -101,6 +101,13 @@ def try_int_to_string(s: str) -> str | int:
         return s
 
 
+def try_float_to_string(s: str) -> str | float:
+    try:
+        return float(s)
+    except ValueError:
+        return s
+
+
 def binarize(image: np.ndarray) -> np.ndarray:
     image_grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # type: ignore
     binary_image = cv2.adaptiveThreshold(  # type: ignore
@@ -115,6 +122,29 @@ def apply_mask(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
     masked_image = cv2.bitwise_and(image, image, mask=mask)  # type: ignore
     masked_image[mask == 0] = 255  # make the masked area white
     return masked_image
+
+
+class AvgBgr:
+    def __init__(self, avg_b: float, avg_g: float, avg_r: float):
+        self.b = avg_b
+        self.g = avg_g
+        self.r = avg_r
+
+    def white_balance(self, image: np.ndarray) -> np.ndarray:
+        # Split channels
+        blue, green, red = cv2.split(image)
+
+        # Calculate scaling factors for each channel
+        scale_b = self.g / self.b
+        scale_r = self.g / self.r
+
+        # Apply scaling factors to each channel
+        blue = cv2.convertScaleAbs(blue, alpha=scale_b)
+        red = cv2.convertScaleAbs(red, alpha=scale_r)
+
+        # Merge channels
+        result = cv2.merge((blue, green, red))
+        return result
 
 
 class RunningStats:

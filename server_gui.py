@@ -34,9 +34,25 @@ def parse_args() -> any:
         help="Choose the folder where you want to save the whiteboards",
     )
 
+    color_adjuster = parser.add_argument_group()
+
+    color_adjuster.add_argument(
+        "--saturation", nargs="?",
+        widget="TextField",
+        default=1.00,
+        help="Add saturation multiplier fx. 1.5"
+    )
+    color_adjuster.add_argument(
+        "--brightness", nargs="?",
+        widget="TextField",
+        default=0,
+        help="Add more brightness fx 50"
+    )
+
     pipeline_modules = parser.add_argument_group()
 
     pipeline_modules.add_argument("--disable_remove_foreground", action="store_true")
+    pipeline_modules.add_argument("--disable_color_adjuster", action="store_true")
     pipeline_modules.add_argument("--disable_transform_perspective", action="store_true")
     pipeline_modules.add_argument("--disable_idealize_colors", action="store_true")
     pipeline_modules.add_argument("--save_on_wipe", action="store_true")

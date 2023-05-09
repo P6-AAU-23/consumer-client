@@ -7,7 +7,7 @@ from typing import Dict, Optional, Tuple
 from torchvision import transforms
 from ..helper import RunningStats, dilate_black_regions, fullness, write_path_with_date_and_time
 from .corner_provider import CornerProvider
-from ..helper import distance, binarize, apply_mask
+from ..helper import distance, binarize, apply_mask, AvgBgr
 from abc import ABC, abstractmethod
 
 
@@ -303,6 +303,48 @@ class EmaAdaptiveSignificantChangeFilter:
             self._descending_sensitivity * self._ema_Δ_fullness
         self._last_image = image
         return self._significant_change_filter.filter(image)
+
+
+class ColorAdjuster(ImageProcessor):
+    def __init__(self, avg_bgr: AvgBgr, saturate_input: float, bright_input: int):
+        self.saturate_input = saturate_input
+        self.bright_input = bright_input
+        self.avg_color = avg_bgr
+
+    def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        image_layers["whiteboard"] = self.color_adjust(image_layers["whiteboard"])
+        return image_layers
+
+    def color_adjust(self, image: cv2.Mat) -> cv2.Mat:
+        """
+        Apply white balancing to an input image using a pre-calculated average of B, G, R channels.
+        Also Applying saturation, brightness, and normalization.
+
+        :param image: Input image as a numpy array.
+        :type image: numpy.ndarray
+        :return: Color adjusted image as a numpy array.
+        :rtype: numpy.ndarray
+        """
+
+        # Applying white balancing
+        result = self.avg_color.white_balance(image)
+
+        # Up saturation & brightness
+        saturation_boost = self.saturate_input
+        brightness = self.bright_input
+
+        if self.saturate_input != 1 or self.bright_input != 0:
+            result = cv2.cvtColor(result, cv2.COLOR_BGR2HSV)
+            if self.saturate_input != 1:
+                result[:, :, 1] = cv2.convertScaleAbs(result[:, :, 1], alpha=float(saturation_boost))
+            if self.bright_input != 0:
+                result[:, :, 2] = cv2.add(result[:, :, 2], int(brightness))
+            result = cv2.cvtColor(result, cv2.COLOR_HSV2BGR)
+
+        # Normalize image
+        result = cv2.normalize(result, None, 0, 255, cv2.NORM_MINMAX)
+
+        return result
 
 
 class SignificantChangeFilter:
