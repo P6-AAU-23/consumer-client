@@ -1,14 +1,15 @@
-from pathlib import Path
 import cv2
-import numpy as np
 import torch
+import numpy as np
+from pathlib import Path
+from ..Africa import Slave
 from enum import Enum, auto
-from typing import Dict, Optional, Tuple
 from torchvision import transforms
-from ..helper import RunningStats, dilate_black_regions, fullness, write_path_with_date_and_time
+from abc import ABC, abstractmethod
+from typing import Dict, Optional, Tuple
 from .corner_provider import CornerProvider
 from ..helper import distance, binarize, apply_mask, AvgBgr
-from abc import ABC, abstractmethod
+from ..helper import RunningStats, dilate_black_regions, fullness, write_path_with_date_and_time
 
 
 class IdealizeColorsMode(Enum):
@@ -132,12 +133,17 @@ class ColorIdealizer(ImageProcessor):
 class ForegroundRemover(ImageProcessor):
     def __init__(self):
         super().__init__()
+
+        actor_ref = Slave.start()
+        #foreground_mask = actor_ref.ask(self.remove(image_layers["whiteboard"])
+
         self.torch_model = torch.hub.load(
             "pytorch/vision:v0.10.0",
             "deeplabv3_mobilenet_v3_large",
             weights="DeepLabV3_MobileNet_V3_Large_Weights.DEFAULT",
         )
         self.torch_model.eval()
+        
 
     def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
         image_layers["foreground_mask"] = self.remove(image_layers["whiteboard"])

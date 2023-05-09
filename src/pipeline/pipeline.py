@@ -15,11 +15,6 @@ def pipeline_builder(args: argparse.Namespace, avg_bgr: AvgBgr) -> ImageProcesso
 
     head = start
 
-    actor_ref = Slave.start()
-
-    foreground_mask = actor_ref.ask(self.foreground_remover.segment(whiteboard))
-
-
     if not args.disable_transform_perspective:
         head = head.set_next(perspective_transformer)
 
