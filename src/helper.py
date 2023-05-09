@@ -123,6 +123,7 @@ def apply_mask(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
     masked_image[mask == 0] = 255  # make the masked area white
     return masked_image
 
+
 class AvgBgr:
     def __init__(self, avg_b: float, avg_g: float, avg_r: float):
         self.b = avg_b

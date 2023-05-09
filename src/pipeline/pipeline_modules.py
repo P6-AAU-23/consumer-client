@@ -306,7 +306,7 @@ class EmaAdaptiveSignificantChangeFilter:
 
 
 class ColorAdjuster(ImageProcessor):
-    def __init__(self, avg_bgr, saturate_input, bright_input):
+    def __init__(self, avg_bgr: AvgBgr, saturate_input: float, bright_input: int):
         self.saturate_input = saturate_input
         self.bright_input = bright_input
         self.avg_color = avg_bgr
@@ -345,6 +345,7 @@ class ColorAdjuster(ImageProcessor):
         result = cv2.normalize(result, None, 0, 255, cv2.NORM_MINMAX)
 
         return result
+
 
 class SignificantChangeFilter:
     """

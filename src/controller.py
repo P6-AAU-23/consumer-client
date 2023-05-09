@@ -4,7 +4,7 @@ from pathlib import Path
 from .pipeline.pipeline import pipeline_builder
 from .current_whiteboard import CurrentWhiteboard
 from .bufferless_video_capture import BufferlessVideoCapture
-from .helper import try_int_to_string, try_float_to_string, AvgBgr
+from .helper import try_int_to_string, AvgBgr
 
 
 class Controller:
@@ -15,9 +15,9 @@ class Controller:
         if not ret:
             print("Can't open camera")
             exit()
-        avg_b = cv2.mean(frame[:,:,0])[0]
-        avg_g = cv2.mean(frame[:,:,1])[0]
-        avg_r = cv2.mean(frame[:,:,2])[0]
+        avg_b = cv2.mean(frame[:, :, 0])[0]
+        avg_g = cv2.mean(frame[:, :, 1])[0]
+        avg_r = cv2.mean(frame[:, :, 2])[0]
         avg_bgr = AvgBgr(avg_b, avg_g, avg_r)
         self.latest_whiteboard = CurrentWhiteboard(Path(args.saved_path))
         self.pipeline = pipeline_builder(args, avg_bgr)

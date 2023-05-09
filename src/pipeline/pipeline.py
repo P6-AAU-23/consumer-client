@@ -1,8 +1,19 @@
 import argparse
-from .pipeline_modules import *
+from .helper import AvgBgr
+from .pipeline_modules import (
+    ColorIdealizer,
+    ColorAdjuster,
+    ForegroundRemover,
+    IdealizeColorsMode,
+    IdentityProcessor,
+    ImageProcessor,
+    Inpainter,
+    PerspectiveTransformer,
+    WipeSaver,
+)
 
 
-def pipeline_builder(args: argparse.Namespace, avg_bgr) -> ImageProcessor:
+def pipeline_builder(args: argparse.Namespace, avg_bgr: AvgBgr) -> ImageProcessor:
     start = IdentityProcessor()
     perspective_transformer = PerspectiveTransformer()
     foreground_remover_handler = ForegroundRemover()
