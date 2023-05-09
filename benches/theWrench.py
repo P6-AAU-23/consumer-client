@@ -2,38 +2,31 @@ import timeit
 import cv2
 import os
 import sys
-
-
 from pathlib import Path
+
+
 path_root = os.getcwd()
 sys.path.append(str(path_root))
-from src.pipeline.pipeline import Pipeline
-from src.pipeline.pipeline import Pipeline
 
 SCALE = 1
-
-#pipeline = Pipeline()
-    # timeit.repeat(stmt='pass', setup='pass', timer=<default timer>, repeat=5, number=1000000, globals=None)
 
 if __name__ == "__main__":
     project_root = os.getcwd()
     for i in range(3):
         sum_time = timeit.timeit(
             """
-whiteboard = pipeline.corner_provider.update(image)
-corners = pipeline.corner_provider.get_corners()
-whiteboard = quadrilateral_to_rectangle(image, corners)
+whiteboard = perspective_transformer.process({"whiteboard": image})["whiteboard"]
 cv2.imshow("benchmark", whiteboard)
 cv2.waitKey(1)
                 """,
             setup=f"""
 import sys
-sys.path.append("{project_root}")
-from src.pipeline.pipeline import Pipeline, quadrilateral_to_rectangle
 import cv2
+sys.path.append("{project_root}")
+from src.pipeline.pipeline import (PerspectiveTransformer)
 gc.enable()
 image = cv2.imread("{project_root}/resources/benchmark{i}.jpg")
-pipeline = Pipeline()
+perspective_transformer = PerspectiveTransformer()
                 """,
             number=SCALE,
         )
@@ -49,24 +42,24 @@ pipeline = Pipeline()
         print(f"FPS: {actual_fps}.")
         print(f"time: {average_time}.")
 
+    #Remove foreground
     for i in range(3):
         sum_time = timeit.timeit(
             """
-foreground_mask = pipeline.foreground_remover.segment(whiteboard)
+foreground_mask = foreground_remover_handler.process(layers)["foreground_mask"]
 cv2.imshow("benchmark", foreground_mask)
 cv2.waitKey(1)
                 """,
             setup=f"""
 import sys
-sys.path.append("{project_root}")
-from src.pipeline.pipeline import Pipeline, quadrilateral_to_rectangle
 import cv2
+sys.path.append("{project_root}")
+from src.pipeline.pipeline import (PerspectiveTransformer, ForegroundRemover)
 gc.enable()
 image = cv2.imread("{project_root}/resources/benchmark{i}.jpg")
-pipeline = Pipeline()
-whiteboard = pipeline.corner_provider.update(image)
-corners = pipeline.corner_provider.get_corners()
-whiteboard = quadrilateral_to_rectangle(image, corners)
+perspective_transformer = PerspectiveTransformer()
+foreground_remover_handler = ForegroundRemover()
+layers = perspective_transformer.process({{"whiteboard": image}})
                 """,
             number=SCALE,
         )
@@ -85,23 +78,62 @@ whiteboard = quadrilateral_to_rectangle(image, corners)
     for i in range(3):
         sum_time = timeit.timeit(
             """
-whiteboard = pl.idealize_colors(whiteboard, pl.IdealizeColorsMode.MASKING)
+whiteboard = color_adjuster_handler.process(layers)["whiteboard"]
 cv2.imshow("benchmark", whiteboard)
 cv2.waitKey(1)
                 """,
             setup=f"""
-import sys
-sys.path.append("{project_root}")
-from src.pipeline import pipeline as pl
-from src.pipeline.pipeline import Pipeline
 import cv2
+sys.path.append("{project_root}")
+from src.pipeline.pipeline import (PerspectiveTransformer, ForegroundRemover, ColorAdjuster)
+from src.helper import AvgBgr
 gc.enable()
 image = cv2.imread("{project_root}/resources/benchmark{i}.jpg")
-pipeline = Pipeline()
-whiteboard = pipeline.corner_provider.update(image)
-corners = pipeline.corner_provider.get_corners()
-whiteboard = pl.quadrilateral_to_rectangle(image, corners)
-foreground_mask = pipeline.foreground_remover.segment(whiteboard)
+avg_bgr = AvgBgr(125, 125, 133)
+perspective_transformer = PerspectiveTransformer()
+foreground_remover_handler = ForegroundRemover()
+color_adjuster_handler = ColorAdjuster(avg_bgr, 1.5, 50)
+
+layers = perspective_transformer.process({{"whiteboard": image}})
+layers = foreground_remover_handler.process(layers)
+                """,
+            number=SCALE,
+        )
+        print()
+        print()
+
+        actual_fps = SCALE / sum_time
+        average_time = sum_time / SCALE
+        height, _, _ = cv2.imread(f"resources/benchmark{i}.jpg").shape  # type: ignore
+        print(
+            f"-------------------------color_adjust {height}p-------------------------"
+        )
+        print(f"FPS: {actual_fps}.")
+        print(f"time: {average_time}.")
+
+    for i in range(3):
+        sum_time = timeit.timeit(
+            """
+whiteboard = idealize_colors_handler.process(layers)["whiteboard"]
+cv2.imshow("benchmark", whiteboard)
+cv2.waitKey(1)
+                """,
+            setup=f"""
+import cv2
+sys.path.append("{project_root}")
+from src.pipeline.pipeline import (PerspectiveTransformer, ForegroundRemover, ColorAdjuster, ColorIdealizer, IdealizeColorsMode)
+from src.helper import AvgBgr
+gc.enable()
+image = cv2.imread("{project_root}/resources/benchmark{i}.jpg")
+avg_bgr = AvgBgr(125, 125, 133)
+perspective_transformer = PerspectiveTransformer()
+foreground_remover_handler = ForegroundRemover()
+color_adjuster_handler = ColorAdjuster(avg_bgr, 1.5, 50)
+idealize_colors_handler = ColorIdealizer(IdealizeColorsMode.MASKING)
+
+layers = perspective_transformer.process({{"whiteboard": image}})
+layers = foreground_remover_handler.process(layers)
+layers = color_adjuster_handler.process(layers)
                 """,
             number=SCALE,
         )
@@ -120,24 +152,29 @@ foreground_mask = pipeline.foreground_remover.segment(whiteboard)
     for i in range(3):
         sum_time = timeit.timeit(
             """
-whiteboard = pipeline.inpainter.inpaint_missing(whiteboard, foreground_mask)
+whiteboard = inpainter_handler.process(layers)["whiteboard"]
 cv2.imshow("benchmark", whiteboard)
 cv2.waitKey(1)
                 """,
             setup=f"""
 import sys
-sys.path.append("{project_root}")
-from src.pipeline import pipeline as pl
-from src.pipeline.pipeline import Pipeline
 import cv2
+sys.path.append("{project_root}")
+from src.pipeline.pipeline import (PerspectiveTransformer, ForegroundRemover, ColorAdjuster, ColorIdealizer, Inpainter, IdealizeColorsMode)
+from src.helper import AvgBgr
 gc.enable()
 image = cv2.imread("{project_root}/resources/benchmark{i}.jpg")
-pipeline = Pipeline()
-whiteboard = pipeline.corner_provider.update(image)
-corners = pipeline.corner_provider.get_corners()
-whiteboard = pl.quadrilateral_to_rectangle(image, corners)
-foreground_mask = pipeline.foreground_remover.segment(whiteboard)
-whiteboard = pl.idealize_colors(whiteboard, pl.IdealizeColorsMode.MASKING)
+avg_bgr = AvgBgr(125, 125, 133)
+perspective_transformer = PerspectiveTransformer()
+foreground_remover_handler = ForegroundRemover()
+color_adjuster_handler = ColorAdjuster(avg_bgr, 1.5, 50)
+idealize_colors_handler = ColorIdealizer(IdealizeColorsMode.MASKING)
+inpainter_handler = Inpainter()
+
+layers = perspective_transformer.process({{"whiteboard": image}})
+layers = foreground_remover_handler.process(layers)
+layers = color_adjuster_handler.process(layers)
+layers = idealize_colors_handler.process(layers)
                 """,
             number=SCALE,
         )
@@ -152,38 +189,3 @@ whiteboard = pl.idealize_colors(whiteboard, pl.IdealizeColorsMode.MASKING)
         )
         print(f"FPS: {actual_fps}.")
         print(f"time: {average_time}.")
-
-#To-do make work
-def benchmark(name, test, setup, SCALE):
-    for i in range(3):
-        sum_time = timeit.timeit(test, setup=setup, number=SCALE)
-        
-        actual_fps = SCALE / sum_time
-        average_time = sum_time / SCALE
-        height, _, _ = cv2.imread(f"resources/benchmark{i}.jpg").shape  # type: ignore
-        print(
-            f"-------------------------{name} {height}p-------------------------"
-        )
-        print(f"FPS: {actual_fps}.")
-        print(f"time: {average_time}.")
-
-
-# def mockImages():
-#     image = []
-    
-#     for i in range(0,3):
-#        image.append(cv2.imread(f"resources/benchmark{i}.jpg"))
-#     return image
-
-
-# def otherBench():
-#     for img in mockImages():
-#         whiteboard = pipeline.process(img)
-
-#         cv2.imshow("benchmark", whiteboard)
-#         cv2.waitKey(1)
-#     return whiteboard
-
-# otherBench()
-
-# timeit.repeat(otherBench, setup="pass", repeat=1, number=SCALE)
