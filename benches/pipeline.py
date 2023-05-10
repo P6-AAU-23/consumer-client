@@ -1,6 +1,6 @@
-import timeit
-import cv2
 import os
+import cv2
+import timeit
 from pathlib import Path
 
 SCALE = 1
@@ -21,15 +21,14 @@ cv2.waitKey(1)
 import sys
 import cv2
 sys.path.append("{project_root}")
-from src.pipeline.pipeline import 
-(
-    IdentityProcessor, 
-    PerspectiveTransformer, 
-    ForegroundRemover, 
-    ColorAdjuster, 
-    ColorIdealizer, 
-    Inpainter, 
-    WipeSaver, 
+from src.pipeline.pipeline import (
+    IdentityProcessor,
+    PerspectiveTransformer,
+    ForegroundRemover,
+    ColorAdjuster,
+    ColorIdealizer,
+    Inpainter,
+    WipeSaver,
     IdealizeColorsMode
     )
 from src.helper import AvgBgr
@@ -75,7 +74,7 @@ pers_trans = PerspectiveTransformer()
                 """,
             number=SCALE,
         )
-        
+
         actual_fps = SCALE / sum_time
         average_time = sum_time / SCALE
         height, _, _ = cv2.imread(f"resources/benchmark{i}.jpg").shape  # type: ignore

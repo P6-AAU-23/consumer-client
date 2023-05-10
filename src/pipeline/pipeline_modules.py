@@ -2,14 +2,15 @@ import cv2
 import torch
 import numpy as np
 from pathlib import Path
-from ..threadings import Slave
 from enum import Enum, auto
 from torchvision import transforms
 from abc import ABC, abstractmethod
 from typing import Dict, Optional, Tuple
 from .corner_provider import CornerProvider
 from ..helper import distance, binarize, apply_mask, AvgBgr
-from ..helper import RunningStats, dilate_black_regions, fullness, write_path_with_date_and_time
+from ..helper import (
+    RunningStats, dilate_black_regions, fullness, write_path_with_date_and_time
+)
 
 
 class IdealizeColorsMode(Enum):
@@ -134,16 +135,12 @@ class ForegroundRemover(ImageProcessor):
     def __init__(self):
         super().__init__()
 
-        actor_ref = Slave.start()
-        #foreground_mask = actor_ref.ask(self.remove(image_layers["whiteboard"])
-
         self.torch_model = torch.hub.load(
             "pytorch/vision:v0.10.0",
             "deeplabv3_mobilenet_v3_large",
             weights="DeepLabV3_MobileNet_V3_Large_Weights.DEFAULT",
         )
         self.torch_model.eval()
-        
 
     def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
         image_layers["foreground_mask"] = self.remove(image_layers["whiteboard"])
@@ -198,10 +195,11 @@ class ColorAdjuster(ImageProcessor):
         Apply white balancing to an input image using a pre-calculated average of B, G, R channels.
         Also Applying saturation, brightness, and normalization.
 
-        :param image: Input image as a numpy array.
-        :type image: numpy.ndarray
-        :return: Color adjusted image as a numpy array.
-        :rtype: numpy.ndarray
+        Args:
+            image: Input image as a numpy array.
+
+        Returns:
+            image: numpy.ndarray
         """
 
         # Applying white balancing

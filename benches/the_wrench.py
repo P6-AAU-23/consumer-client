@@ -1,8 +1,7 @@
-import timeit
-import cv2
 import os
 import sys
-from pathlib import Path
+import cv2
+import timeit
 
 
 path_root = os.getcwd()
@@ -42,7 +41,6 @@ perspective_transformer = PerspectiveTransformer()
         print(f"FPS: {actual_fps}.")
         print(f"time: {average_time}.")
 
-    #Remove foreground
     for i in range(3):
         sum_time = timeit.timeit(
             """
@@ -121,7 +119,9 @@ cv2.waitKey(1)
             setup=f"""
 import cv2
 sys.path.append("{project_root}")
-from src.pipeline.pipeline import (PerspectiveTransformer, ForegroundRemover, ColorAdjuster, ColorIdealizer, IdealizeColorsMode)
+from src.pipeline.pipeline import (
+    PerspectiveTransformer, ForegroundRemover, ColorAdjuster, ColorIdealizer, IdealizeColorsMode
+    )
 from src.helper import AvgBgr
 gc.enable()
 image = cv2.imread("{project_root}/resources/benchmark{i}.jpg")
@@ -160,7 +160,9 @@ cv2.waitKey(1)
 import sys
 import cv2
 sys.path.append("{project_root}")
-from src.pipeline.pipeline import (PerspectiveTransformer, ForegroundRemover, ColorAdjuster, ColorIdealizer, Inpainter, IdealizeColorsMode)
+from src.pipeline.pipeline import (
+    PerspectiveTransformer, ForegroundRemover, ColorAdjuster, ColorIdealizer, Inpainter, IdealizeColorsMode
+    )
 from src.helper import AvgBgr
 gc.enable()
 image = cv2.imread("{project_root}/resources/benchmark{i}.jpg")
