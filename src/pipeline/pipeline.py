@@ -3,7 +3,7 @@ from ..helper import AvgBgr
 from .pipeline_modules import (
     ColorIdealizer,
     ColorAdjuster,
-    FastForegroundRemover,
+    MediumForegroundRemover,
     IdealizeColorsMode,
     IdentityProcessor,
     ImageProcessor,
@@ -16,7 +16,7 @@ from .pipeline_modules import (
 def pipeline_builder(args: argparse.Namespace, avg_bgr: AvgBgr) -> ImageProcessor:
     start = IdentityProcessor()
     perspective_transformer = PerspectiveTransformer()
-    foreground_remover_handler = FastForegroundRemover()
+    foreground_remover_handler = MediumForegroundRemover()
     color_adjuster_handler = ColorAdjuster(avg_bgr, args.saturation, args.brightness)
     idealize_colors_handler = ColorIdealizer(IdealizeColorsMode.MASKING)
     inpainter_handler = Inpainter()

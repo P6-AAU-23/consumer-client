@@ -4,12 +4,16 @@ import numpy as np
 import torch
 from enum import Enum, auto
 from typing import Dict, Optional, Tuple
+from torch.functional import Tensor
 from torchvision import transforms
+from torchvision.transforms.functional import to_pil_image
+from torchvision.utils import draw_bounding_boxes
 from ..helper import RunningStats, dilate_black_regions, fullness, write_path_with_date_and_time
 from .corner_provider import CornerProvider
 from ..helper import distance, binarize, apply_mask, AvgBgr
 from abc import ABC, abstractmethod
-from torchvision.models import mobilenet_v3_small, MobileNet_V3_Small_Weights  
+from torchvision.models import mobilenet_v3_small, MobileNet_V3_Small_Weights
+from torchvision.models.detection import fasterrcnn_mobilenet_v3_large_320_fpn, FasterRCNN_MobileNet_V3_Large_320_FPN_Weights 
 
 
 class IdealizeColorsMode(Enum):
@@ -129,6 +133,12 @@ class ColorIdealizer(ImageProcessor):
         recolored_image = cv2.merge((b, g, r))  # type: ignore
         return recolored_image
 
+def image_to_tensor(image: np.ndarray) -> Tensor:
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # type: ignore
+    image = image / 255.0
+    tensor = torch.from_numpy(image)
+    return tensor.permute(2, 0, 1)
+
 
 class FastForegroundRemover(ImageProcessor):
     def __init__(self):
@@ -138,18 +148,20 @@ class FastForegroundRemover(ImageProcessor):
         self._preprocess = self._weights.transforms()
         self._model = mobilenet_v3_small(self._weights) 
         self._model.eval()
+        if torch.cuda.is_available():
+            self._model.to("cuda")
 
     def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
         image_layers["foreground_mask"] = self.remove(image_layers["whiteboard"])
         return image_layers
 
-    def remove(self, img: np.ndarray) -> np.ndarray:
-        height, width, _ = img.shape
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # type: ignore
-        img = img / 255.0
-        tensor = torch.from_numpy(img)
-        tensor = tensor.permute(2, 0, 1)
+    def remove(self, image: np.ndarray) -> np.ndarray:
+        height, width, _ = image.shape
+        tensor = image_to_tensor(image)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # type: ignore
         batch =  self._preprocess(tensor).unsqueeze(0)
+        if torch.cuda.is_available():
+            batch = batch.to("cuda")
         prediction = self._model(batch)
         class_id = prediction.argmax().item()
         category_name = self._weights.meta["categories"][class_id]
@@ -158,20 +170,42 @@ class FastForegroundRemover(ImageProcessor):
             #  a totally white mask
             return np.ones((height, width, 1), dtype=np.uint8)
         else:
-            #  a totally white mask
+            #  a totally black mask
             return np.zeros((height, width, 1), dtype=np.uint8)
 
 
 class MediumForegroundRemover(ImageProcessor):
     def __init__(self):
         super().__init__()
+        self._weights = FasterRCNN_MobileNet_V3_Large_320_FPN_Weights.DEFAULT
+        self._preprocess = self._weights.transforms()
+        self._model = fasterrcnn_mobilenet_v3_large_320_fpn(self._weights) 
+        self._model.eval()
+        if torch.cuda.is_available():
+            self._model.to("cuda")
 
     def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
         image_layers["foreground_mask"] = self.remove(image_layers["whiteboard"])
         return image_layers
 
-    def remove(self, img: np.ndarray) -> np.ndarray:
-        return img
+    def remove(self, image: np.ndarray) -> np.ndarray:
+        tensor = image_to_tensor(image)
+        batch = self._preprocess(tensor).unsqueeze(0)
+        if torch.cuda.is_available():
+            batch = batch.to("cuda")
+        prediction = self._model(batch)[0]
+        # Get bounding boxes and labels
+        boxes, labels = prediction['boxes'], prediction['labels']
+        # COCO class 1 corresponds to 'person'
+        person_indices = labels == 1
+        person_boxes = boxes[person_indices]
+        height, width, _ = image.shape
+        mask = np.ones((height, width, 1), dtype=np.uint8)
+        for person_box in person_boxes:
+            xmin, ymin, xmax, ymax = person_box
+            print(int(xmin), int(ymin), int(xmax), int(ymax))
+            cv2.rectangle(mask, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (0), -1) 
+        return mask
 
 
 class SlowForegroundRemover(ImageProcessor):
