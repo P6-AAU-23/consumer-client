@@ -9,6 +9,7 @@ from ..helper import RunningStats, dilate_black_regions, fullness, write_path_wi
 from .corner_provider import CornerProvider
 from ..helper import distance, binarize, apply_mask, AvgBgr
 from abc import ABC, abstractmethod
+from torchvision.models import mobilenet_v3_small, MobileNet_V3_Small_Weights  
 
 
 class IdealizeColorsMode(Enum):
@@ -129,7 +130,51 @@ class ColorIdealizer(ImageProcessor):
         return recolored_image
 
 
-class ForegroundRemover(ImageProcessor):
+class FastForegroundRemover(ImageProcessor):
+    def __init__(self):
+        super().__init__()
+        # TODO: Train own model with two labels "blocked" and "not blocked"
+        self._weights = MobileNet_V3_Small_Weights.DEFAULT
+        self._preprocess = self._weights.transforms()
+        self._model = mobilenet_v3_small(self._weights) 
+        self._model.eval()
+
+    def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        image_layers["foreground_mask"] = self.remove(image_layers["whiteboard"])
+        return image_layers
+
+    def remove(self, img: np.ndarray) -> np.ndarray:
+        height, width, _ = img.shape
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # type: ignore
+        img = img / 255.0
+        tensor = torch.from_numpy(img)
+        tensor = tensor.permute(2, 0, 1)
+        batch =  self._preprocess(tensor).unsqueeze(0)
+        prediction = self._model(batch)
+        class_id = prediction.argmax().item()
+        category_name = self._weights.meta["categories"][class_id]
+        print(category_name)
+        if category_name == "not blocked":
+            #  a totally white mask
+            return np.ones((height, width, 1), dtype=np.uint8)
+        else:
+            #  a totally white mask
+            return np.zeros((height, width, 1), dtype=np.uint8)
+
+
+class MediumForegroundRemover(ImageProcessor):
+    def __init__(self):
+        super().__init__()
+
+    def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        image_layers["foreground_mask"] = self.remove(image_layers["whiteboard"])
+        return image_layers
+
+    def remove(self, img: np.ndarray) -> np.ndarray:
+        return img
+
+
+class SlowForegroundRemover(ImageProcessor):
     def __init__(self):
         super().__init__()
         self.torch_model = torch.hub.load(
