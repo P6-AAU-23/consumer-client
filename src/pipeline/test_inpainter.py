@@ -1,6 +1,6 @@
-from .pipeline import Inpainter
 import cv2
 import numpy as np
+from .pipeline import Inpainter
 
 
 def test_inpaint_missing_inpaints_missing() -> None:

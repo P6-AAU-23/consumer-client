@@ -1,10 +1,10 @@
 import cv2
 from typing import Any
 from pathlib import Path
+from .helper import try_int_to_string, AvgBgr
 from .pipeline.pipeline import pipeline_builder
 from .current_whiteboard import CurrentWhiteboard
 from .bufferless_video_capture import BufferlessVideoCapture
-from .helper import try_int_to_string, AvgBgr
 
 
 class Controller:

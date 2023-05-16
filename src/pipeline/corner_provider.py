@@ -1,7 +1,7 @@
-from typing import Dict, Optional, Tuple, Any
-from ..helper import distance
 import cv2
 import numpy as np
+from ..helper import distance
+from typing import Dict, Optional, Tuple, Any
 
 
 class CornerProvider:

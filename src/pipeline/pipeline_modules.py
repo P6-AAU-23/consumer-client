@@ -1,17 +1,21 @@
-from pathlib import Path
 import cv2
-import numpy as np
 import torch
+import numpy as np
+from pathlib import Path
 from enum import Enum, auto
 from typing import Dict, Optional, Tuple
 from torch.functional import Tensor
 from torchvision import transforms
-from ..helper import RunningStats, dilate_black_regions, fullness, write_path_with_date_and_time
+from abc import ABC, abstractmethod
+from typing import Dict, Optional, Tuple
 from .corner_provider import CornerProvider
 from ..helper import distance, binarize, apply_mask, AvgBgr
 from abc import ABC, abstractmethod
 from torchvision.models import mobilenet_v3_small, MobileNet_V3_Small_Weights
 from torchvision.models.detection import fasterrcnn_mobilenet_v3_large_320_fpn, FasterRCNN_MobileNet_V3_Large_320_FPN_Weights
+from ..helper import (
+    RunningStats, dilate_black_regions, fullness, write_path_with_date_and_time
+)
 
 
 class IdealizeColorsMode(Enum):
@@ -210,6 +214,7 @@ class MediumForegroundRemover(ImageProcessor):
 class SlowForegroundRemover(ImageProcessor):
     def __init__(self):
         super().__init__()
+
         self.torch_model = torch.hub.load(
             "pytorch/vision:v0.10.0",
             "deeplabv3_mobilenet_v3_large",
@@ -252,6 +257,50 @@ class SlowForegroundRemover(ImageProcessor):
         mask = dilate_black_regions(mask, iterations=30)
 
         return mask
+
+
+class ColorAdjuster(ImageProcessor):
+    def __init__(self, avg_bgr: AvgBgr, saturate_input: float, bright_input: int):
+        super().__init__()
+        self.saturate_input = saturate_input
+        self.bright_input = bright_input
+        self.avg_color = avg_bgr
+
+    def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        image_layers["whiteboard"] = self.color_adjust(image_layers["whiteboard"])
+        return image_layers
+
+    def color_adjust(self, image: cv2.Mat) -> cv2.Mat:
+        """
+        Apply white balancing to an input image using a pre-calculated average of B, G, R channels.
+        Also Applying saturation, brightness, and normalization.
+
+        Args:
+            image: Input image as a numpy array.
+
+        Returns:
+            image: numpy.ndarray
+        """
+
+        # Applying white balancing
+        result = self.avg_color.white_balance(image)
+
+        # Up saturation & brightness
+        saturation_boost = self.saturate_input
+        brightness = self.bright_input
+
+        if self.saturate_input != 1 or self.bright_input != 0:
+            result = cv2.cvtColor(result, cv2.COLOR_BGR2HSV)
+            if self.saturate_input != 1:
+                result[:, :, 1] = cv2.convertScaleAbs(result[:, :, 1], alpha=float(saturation_boost))
+            if self.bright_input != 0:
+                result[:, :, 2] = cv2.add(result[:, :, 2], int(brightness))
+            result = cv2.cvtColor(result, cv2.COLOR_HSV2BGR)
+
+        # Normalize image
+        result = cv2.normalize(result, None, 0, 255, cv2.NORM_MINMAX)
+
+        return result
 
 
 class Inpainter(ImageProcessor):
@@ -377,48 +426,6 @@ class EmaAdaptiveSignificantChangeFilter:
             self._descending_sensitivity * self._ema_Δ_fullness
         self._last_image = image
         return self._significant_change_filter.filter(image)
-
-
-class ColorAdjuster(ImageProcessor):
-    def __init__(self, avg_bgr: AvgBgr, saturate_input: float, bright_input: int):
-        self.saturate_input = saturate_input
-        self.bright_input = bright_input
-        self.avg_color = avg_bgr
-
-    def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
-        image_layers["whiteboard"] = self.color_adjust(image_layers["whiteboard"])
-        return image_layers
-
-    def color_adjust(self, image: np.ndarray) -> np.ndarray:
-        """Applies white balancing to an input image using a pre-calculated average of B, G, R channels.
-        Also applies saturation, brightness, and normalization.
-
-        Args:
-            image (np.ndarray): A numpy array representing the input image.
-
-        Returns:
-            np.ndarray: A color-adjusted image as a numpy array.
-        """
-
-        # Applying white balancing
-        result = self.avg_color.white_balance(image)
-
-        # Up saturation & brightness
-        saturation_boost = self.saturate_input
-        brightness = self.bright_input
-
-        if self.saturate_input != 1 or self.bright_input != 0:
-            result = cv2.cvtColor(result, cv2.COLOR_BGR2HSV)
-            if self.saturate_input != 1:
-                result[:, :, 1] = cv2.convertScaleAbs(result[:, :, 1], alpha=float(saturation_boost))
-            if self.bright_input != 0:
-                result[:, :, 2] = cv2.add(result[:, :, 2], int(brightness))
-            result = cv2.cvtColor(result, cv2.COLOR_HSV2BGR)
-
-        # Normalize image
-        result = cv2.normalize(result, None, 0, 255, cv2.NORM_MINMAX)
-
-        return result
 
 
 class SignificantChangeFilter:
