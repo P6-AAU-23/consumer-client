@@ -200,11 +200,11 @@ class MediumForegroundRemover(ImageProcessor):
         person_indices = labels == 1
         person_boxes = boxes[person_indices]
         height, width, _ = image.shape
-        mask = np.ones((height, width, 1), dtype=np.uint8)
+        mask = np.ones((height, width), dtype=np.uint8)
         for person_box in person_boxes:
             xmin, ymin, xmax, ymax = person_box
-            print(int(xmin), int(ymin), int(xmax), int(ymax))
             cv2.rectangle(mask, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (0), -1) 
+        mask = dilate_black_regions(mask, iterations=30)
         return mask
 
 
@@ -250,7 +250,7 @@ class SlowForegroundRemover(ImageProcessor):
         prediction_in_numpy = output_predictions.byte().cpu().numpy()
 
         mask = cv2.inRange(prediction_in_numpy, 0, 0)
-        mask = dilate_black_regions(mask, iterations=100)
+        mask = dilate_black_regions(mask, iterations=30)
 
         return mask
 
@@ -291,16 +291,12 @@ class Inpainter(ImageProcessor):
             raise ValueError(
                 "The input image and missing_mask must have the same height and width."
             )
-        # Ensure the mask is a binary mask (0 or 255)
-        binary_mask = (missing_mask == 0).astype(np.uint8) * 255
-        # Apply the mask to the last_image using bitwise operations
+        _, missing_mask = cv2.threshold(missing_mask, 0, 255,cv2.THRESH_BINARY)
+        masked_input = cv2.bitwise_and(image, image, mask=missing_mask)  # type: ignore
+        inverted_missing_mask = cv2.bitwise_not(missing_mask)  # type: ignore
         masked_last_image = cv2.bitwise_and(  # type: ignore
-            self._last_image, self._last_image, mask=binary_mask
+            self._last_image, self._last_image, mask=inverted_missing_mask
         )
-        # Invert the binary_mask to apply it to the input image
-        inverted_binary_mask = cv2.bitwise_not(binary_mask)  # type: ignore
-        masked_input = cv2.bitwise_and(image, image, mask=inverted_binary_mask)  # type: ignore
-        # Combine the masked images to create the inpainted result
         inpainted_image = cv2.add(masked_input, masked_last_image)  # type: ignore
         self._last_image = inpainted_image
         return inpainted_image
