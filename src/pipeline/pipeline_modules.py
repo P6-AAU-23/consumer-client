@@ -6,14 +6,12 @@ from enum import Enum, auto
 from typing import Dict, Optional, Tuple
 from torch.functional import Tensor
 from torchvision import transforms
-from torchvision.transforms.functional import to_pil_image
-from torchvision.utils import draw_bounding_boxes
 from ..helper import RunningStats, dilate_black_regions, fullness, write_path_with_date_and_time
 from .corner_provider import CornerProvider
 from ..helper import distance, binarize, apply_mask, AvgBgr
 from abc import ABC, abstractmethod
 from torchvision.models import mobilenet_v3_small, MobileNet_V3_Small_Weights
-from torchvision.models.detection import fasterrcnn_mobilenet_v3_large_320_fpn, FasterRCNN_MobileNet_V3_Large_320_FPN_Weights 
+from torchvision.models.detection import fasterrcnn_mobilenet_v3_large_320_fpn, FasterRCNN_MobileNet_V3_Large_320_FPN_Weights
 
 
 class IdealizeColorsMode(Enum):
@@ -133,6 +131,7 @@ class ColorIdealizer(ImageProcessor):
         recolored_image = cv2.merge((b, g, r))  # type: ignore
         return recolored_image
 
+
 def image_to_tensor(image: np.ndarray) -> Tensor:
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # type: ignore
     image = image / 255.0
@@ -146,7 +145,7 @@ class FastForegroundRemover(ImageProcessor):
         # TODO: Train own model with two labels "blocked" and "not blocked"
         self._weights = MobileNet_V3_Small_Weights.DEFAULT
         self._preprocess = self._weights.transforms()
-        self._model = mobilenet_v3_small(self._weights) 
+        self._model = mobilenet_v3_small(self._weights)
         self._model.eval()
         if torch.cuda.is_available():
             self._model.to("cuda")
@@ -159,7 +158,7 @@ class FastForegroundRemover(ImageProcessor):
         height, width, _ = image.shape
         tensor = image_to_tensor(image)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # type: ignore
-        batch =  self._preprocess(tensor).unsqueeze(0)
+        batch = self._preprocess(tensor).unsqueeze(0)
         if torch.cuda.is_available():
             batch = batch.to("cuda")
         prediction = self._model(batch)
@@ -179,7 +178,7 @@ class MediumForegroundRemover(ImageProcessor):
         super().__init__()
         self._weights = FasterRCNN_MobileNet_V3_Large_320_FPN_Weights.DEFAULT
         self._preprocess = self._weights.transforms()
-        self._model = fasterrcnn_mobilenet_v3_large_320_fpn(self._weights) 
+        self._model = fasterrcnn_mobilenet_v3_large_320_fpn(self._weights)
         self._model.eval()
         if torch.cuda.is_available():
             self._model.to("cuda")
@@ -203,7 +202,7 @@ class MediumForegroundRemover(ImageProcessor):
         mask = np.ones((height, width), dtype=np.uint8)
         for person_box in person_boxes:
             xmin, ymin, xmax, ymax = person_box
-            cv2.rectangle(mask, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (0), -1) 
+            cv2.rectangle(mask, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (0), -1)
         mask = dilate_black_regions(mask, iterations=30)
         return mask
 
@@ -291,7 +290,7 @@ class Inpainter(ImageProcessor):
             raise ValueError(
                 "The input image and missing_mask must have the same height and width."
             )
-        _, missing_mask = cv2.threshold(missing_mask, 0, 255,cv2.THRESH_BINARY)
+        _, missing_mask = cv2.threshold(missing_mask, 0, 255, cv2.THRESH_BINARY)
         masked_input = cv2.bitwise_and(image, image, mask=missing_mask)  # type: ignore
         inverted_missing_mask = cv2.bitwise_not(missing_mask)  # type: ignore
         masked_last_image = cv2.bitwise_and(  # type: ignore
@@ -390,15 +389,15 @@ class ColorAdjuster(ImageProcessor):
         image_layers["whiteboard"] = self.color_adjust(image_layers["whiteboard"])
         return image_layers
 
-    def color_adjust(self, image: cv2.Mat) -> cv2.Mat:
-        """
-        Apply white balancing to an input image using a pre-calculated average of B, G, R channels.
-        Also Applying saturation, brightness, and normalization.
+    def color_adjust(self, image: np.ndarray) -> np.ndarray:
+        """Applies white balancing to an input image using a pre-calculated average of B, G, R channels.
+        Also applies saturation, brightness, and normalization.
 
-        :param image: Input image as a numpy array.
-        :type image: numpy.ndarray
-        :return: Color adjusted image as a numpy array.
-        :rtype: numpy.ndarray
+        Args:
+            image (np.ndarray): A numpy array representing the input image.
+
+        Returns:
+            np.ndarray: A color-adjusted image as a numpy array.
         """
 
         # Applying white balancing
