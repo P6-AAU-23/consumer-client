@@ -135,8 +135,8 @@ class AvgBgr:
         blue, green, red = cv2.split(image)
 
         # Calculate scaling factors for each channel
-        scale_b = self.g / self.b
-        scale_r = self.g / self.r
+        scale_b = self.b / self.g
+        scale_r = self.r / self.g
 
         # Apply scaling factors to each channel
         blue = cv2.convertScaleAbs(blue, alpha=scale_b)
