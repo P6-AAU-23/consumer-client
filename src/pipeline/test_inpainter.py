@@ -42,9 +42,5 @@ def test_inpaint_missing_does_not_inpaint_if_no_missing() -> None:
     # Act
     actual = inpainter.inpaint_missing(input, mask)
 
-    cv2.imshow("input", input)
-    cv2.imshow("actual", actual)
-    cv2.waitKey(0)
-
     # Assert
     assert np.array_equal(actual, input)
