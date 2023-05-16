@@ -37,5 +37,5 @@ perspective_transformer = PerspectiveTransformer()
         print(f"FPS: {actual_fps}.")
         print(f"time: {average_time}.")
         print(
-            f"-----------------------------------------------------------------------------"
+            "-----------------------------------------------------------------------------"
         )
