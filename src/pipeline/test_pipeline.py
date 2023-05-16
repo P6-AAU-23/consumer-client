@@ -1,8 +1,10 @@
-from typing import Any
-from src.pipeline.pipeline_modules import DelayedPeakFilter, PerspectiveTransformer, SignificantChangeFilter
-import numpy as np
 import cv2
 import pytest
+import numpy as np
+from typing import Any
+from src.pipeline.pipeline_modules import (
+    DelayedPeakFilter, PerspectiveTransformer, SignificantChangeFilter
+)
 
 
 def test_warp_quadrilateral_to_rectangle_no_transformation() -> None:
