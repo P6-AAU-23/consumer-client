@@ -1,11 +1,14 @@
 import os
 import cv2
 import timeit
+from pathlib import Path
 
 SCALE = 1000
 
 if __name__ == "__main__":
-    project_root = os.path.dirname(os.path.abspath(__file__)) + "/.."
+    dir = Path(os.path.dirname(os.path.abspath(__file__)))
+    project_root = os.path.abspath(dir / "..")
+
     for i in range(3):
         sum_time = timeit.timeit(
             """
