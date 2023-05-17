@@ -1,3 +1,4 @@
+
 import os
 import cv2
 import timeit
@@ -9,7 +10,7 @@ if __name__ == "__main__":
     for i in range(3):
         sum_time = timeit.timeit(
             """
-whiteboard = foreground_remover.process({"whiteboard": image})["whiteboard"]
+whiteboard = start.process({"whiteboard": image})["whiteboard"]
 cv2.imshow("benchmark", whiteboard)
 cv2.waitKey(1)
                 """,
@@ -18,15 +19,11 @@ import sys
 import cv2
 sys.path.append("{project_root}")
 from src.pipeline.pipeline import (
-    ForegroundRemover,
-    Inpainter,
+    IdentityProcessor,
     )
-from src.helper import AvgBgr
 gc.enable()
 image = cv2.imread("{project_root}/resources/benchmark{i}.jpg")
-foreground_remover = ForegroundRemover()
-inpainter = Inpainter()
-foreground_remover.set_next(inpainter)
+start = IdentityProcessor()
                 """,
             number=SCALE,
         )

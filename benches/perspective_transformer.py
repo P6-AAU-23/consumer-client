@@ -9,9 +9,7 @@ if __name__ == "__main__":
     for i in range(3):
         sum_time = timeit.timeit(
             """
-whiteboard = perspective_transformer.process({"whiteboard": image})["whiteboard"]
-cv2.imshow("benchmark", whiteboard)
-cv2.waitKey(1)
+perspective_transformer.process({"whiteboard": image})
                 """,
             setup=f"""
 import sys
