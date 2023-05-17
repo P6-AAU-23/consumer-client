@@ -166,7 +166,6 @@ class FastForegroundRemover(ImageProcessor):
         prediction = self._model(batch)
         class_id = prediction.argmax().item()
         category_name = self._weights.meta["categories"][class_id]
-        print(category_name)
         if category_name == "not blocked":
             #  a totally white mask
             return np.ones((height, width, 1), dtype=np.uint8)
