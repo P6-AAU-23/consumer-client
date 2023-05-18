@@ -11,20 +11,22 @@ if __name__ == "__main__":
     for i in range(3):
         sum_time = timeit.timeit(
             """
-color_idealizer.process({"whiteboard": image})
+foreground_remover.process({"whiteboard": image})
                 """,
             setup=f"""
 import sys
 import cv2
 sys.path.append("{project_root}")
 from src.pipeline.pipeline import (
-    ColorIdealizer,
-    IdealizeColorsMode
+    FastForegroundRemover,
+    Inpainter,
     )
 from src.helper import AvgBgr
 gc.enable()
 image = cv2.imread("{project_root}/resources/benchmark{i}.jpg")
-color_idealizer = ColorIdealizer(IdealizeColorsMode.MASKING)
+foreground_remover = FastForegroundRemover()
+inpainter = Inpainter()
+foreground_remover.set_next(inpainter)
                 """,
             number=SCALE,
         )

@@ -1,3 +1,4 @@
+
 import os
 import cv2
 import timeit
@@ -11,20 +12,20 @@ if __name__ == "__main__":
     for i in range(3):
         sum_time = timeit.timeit(
             """
-color_idealizer.process({"whiteboard": image})
+whiteboard = start.process({"whiteboard": image})["whiteboard"]
+cv2.imshow("benchmark", whiteboard)
+cv2.waitKey(1)
                 """,
             setup=f"""
 import sys
 import cv2
 sys.path.append("{project_root}")
 from src.pipeline.pipeline import (
-    ColorIdealizer,
-    IdealizeColorsMode
+    IdentityProcessor,
     )
-from src.helper import AvgBgr
 gc.enable()
 image = cv2.imread("{project_root}/resources/benchmark{i}.jpg")
-color_idealizer = ColorIdealizer(IdealizeColorsMode.MASKING)
+start = IdentityProcessor()
                 """,
             number=SCALE,
         )

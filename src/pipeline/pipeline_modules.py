@@ -3,11 +3,14 @@ import torch
 import numpy as np
 from pathlib import Path
 from enum import Enum, auto
+from torch.functional import Tensor
 from torchvision import transforms
 from abc import ABC, abstractmethod
 from typing import Dict, Optional, Tuple
 from .corner_provider import CornerProvider
 from ..helper import distance, binarize, apply_mask, AvgBgr
+from torchvision.models import mobilenet_v3_small, MobileNet_V3_Small_Weights
+from torchvision.models.detection import fasterrcnn_mobilenet_v3_large_320_fpn, FasterRCNN_MobileNet_V3_Large_320_FPN_Weights
 from ..helper import (
     RunningStats, dilate_black_regions, fullness, write_path_with_date_and_time
 )
@@ -131,7 +134,81 @@ class ColorIdealizer(ImageProcessor):
         return recolored_image
 
 
-class ForegroundRemover(ImageProcessor):
+def image_to_tensor(image: np.ndarray) -> Tensor:
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # type: ignore
+    image = image / 255.0
+    tensor = torch.from_numpy(image)
+    return tensor.permute(2, 0, 1)
+
+
+class FastForegroundRemover(ImageProcessor):
+    def __init__(self):
+        super().__init__()
+        # TODO: Train own model with two labels "blocked" and "not blocked"
+        self._weights = MobileNet_V3_Small_Weights.DEFAULT
+        self._preprocess = self._weights.transforms()
+        self._model = mobilenet_v3_small(self._weights)
+        self._model.eval()
+        if torch.cuda.is_available():
+            self._model.to("cuda")
+
+    def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        image_layers["foreground_mask"] = self.remove(image_layers["whiteboard"])
+        return image_layers
+
+    def remove(self, image: np.ndarray) -> np.ndarray:
+        height, width, _ = image.shape
+        tensor = image_to_tensor(image)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # type: ignore
+        batch = self._preprocess(tensor).unsqueeze(0)
+        if torch.cuda.is_available():
+            batch = batch.to("cuda")
+        prediction = self._model(batch)
+        class_id = prediction.argmax().item()
+        category_name = self._weights.meta["categories"][class_id]
+        if category_name == "not blocked":
+            #  a totally white mask
+            return np.ones((height, width, 1), dtype=np.uint8)
+        else:
+            #  a totally black mask
+            return np.zeros((height, width, 1), dtype=np.uint8)
+
+
+class MediumForegroundRemover(ImageProcessor):
+    def __init__(self):
+        super().__init__()
+        self._weights = FasterRCNN_MobileNet_V3_Large_320_FPN_Weights.DEFAULT
+        self._preprocess = self._weights.transforms()
+        self._model = fasterrcnn_mobilenet_v3_large_320_fpn(self._weights)
+        self._model.eval()
+        if torch.cuda.is_available():
+            self._model.to("cuda")
+
+    def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        image_layers["foreground_mask"] = self.remove(image_layers["whiteboard"])
+        return image_layers
+
+    def remove(self, image: np.ndarray) -> np.ndarray:
+        tensor = image_to_tensor(image)
+        batch = self._preprocess(tensor).unsqueeze(0)
+        if torch.cuda.is_available():
+            batch = batch.to("cuda")
+        prediction = self._model(batch)[0]
+        # Get bounding boxes and labels
+        boxes, labels = prediction['boxes'], prediction['labels']
+        # COCO class 1 corresponds to 'person'
+        person_indices = labels == 1
+        person_boxes = boxes[person_indices]
+        height, width, _ = image.shape
+        mask = np.ones((height, width), dtype=np.uint8)
+        for person_box in person_boxes:
+            xmin, ymin, xmax, ymax = person_box
+            cv2.rectangle(mask, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (0), -1)
+        mask = dilate_black_regions(mask, iterations=30)
+        return mask
+
+
+class SlowForegroundRemover(ImageProcessor):
     def __init__(self):
         super().__init__()
 
@@ -174,7 +251,7 @@ class ForegroundRemover(ImageProcessor):
         prediction_in_numpy = output_predictions.byte().cpu().numpy()
 
         mask = cv2.inRange(prediction_in_numpy, 0, 0)
-        mask = dilate_black_regions(mask, iterations=100)
+        mask = dilate_black_regions(mask, iterations=30)
 
         return mask
 
@@ -259,16 +336,12 @@ class Inpainter(ImageProcessor):
             raise ValueError(
                 "The input image and missing_mask must have the same height and width."
             )
-        # Ensure the mask is a binary mask (0 or 255)
-        binary_mask = (missing_mask == 0).astype(np.uint8) * 255
-        # Apply the mask to the last_image using bitwise operations
+        _, missing_mask = cv2.threshold(missing_mask, 0, 255, cv2.THRESH_BINARY)
+        masked_input = cv2.bitwise_and(image, image, mask=missing_mask)  # type: ignore
+        inverted_missing_mask = cv2.bitwise_not(missing_mask)  # type: ignore
         masked_last_image = cv2.bitwise_and(  # type: ignore
-            self._last_image, self._last_image, mask=binary_mask
+            self._last_image, self._last_image, mask=inverted_missing_mask
         )
-        # Invert the binary_mask to apply it to the input image
-        inverted_binary_mask = cv2.bitwise_not(binary_mask)  # type: ignore
-        masked_input = cv2.bitwise_and(image, image, mask=inverted_binary_mask)  # type: ignore
-        # Combine the masked images to create the inpainted result
         inpainted_image = cv2.add(masked_input, masked_last_image)  # type: ignore
         self._last_image = inpainted_image
         return inpainted_image

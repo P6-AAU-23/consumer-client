@@ -1,32 +1,30 @@
 import os
 import cv2
 import timeit
+from pathlib import Path
 
 SCALE = 1000
 
 if __name__ == "__main__":
-    project_root = os.path.dirname(os.path.abspath(__file__)) + "/.."
+    dir = Path(os.path.dirname(os.path.abspath(__file__)))
+    project_root = os.path.abspath(dir / "..")
     for i in range(3):
         sum_time = timeit.timeit(
             """
-whiteboard = foreground_remover.process({"whiteboard": image})["whiteboard"]
-cv2.imshow("benchmark", whiteboard)
-cv2.waitKey(1)
+color_adjuster.process({"whiteboard": image})
                 """,
             setup=f"""
 import sys
 import cv2
 sys.path.append("{project_root}")
 from src.pipeline.pipeline import (
-    ForegroundRemover,
-    Inpainter,
+    ColorAdjuster,
     )
 from src.helper import AvgBgr
 gc.enable()
 image = cv2.imread("{project_root}/resources/benchmark{i}.jpg")
-foreground_remover = ForegroundRemover()
-inpainter = Inpainter()
-foreground_remover.set_next(inpainter)
+avg_bgr = AvgBgr(125, 125, 133)
+color_adjuster = ColorAdjuster(avg_bgr, 1.5, 50)
                 """,
             number=SCALE,
         )

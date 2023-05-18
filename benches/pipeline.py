@@ -1,11 +1,13 @@
 import os
 import cv2
 import timeit
+from pathlib import Path
 
 SCALE = 1000
 
 if __name__ == "__main__":
-    project_root = os.path.dirname(os.path.abspath(__file__)) + "/.."
+    dir = Path(os.path.dirname(os.path.abspath(__file__)))
+    project_root = os.path.abspath(dir / "..")
     for i in range(3):
         sum_time = timeit.timeit(
             """
@@ -20,7 +22,7 @@ sys.path.append("{project_root}")
 from src.pipeline.pipeline import (
     IdentityProcessor,
     PerspectiveTransformer,
-    ForegroundRemover,
+    MediumForegroundRemover,
     ColorAdjuster,
     ColorIdealizer,
     Inpainter,
@@ -33,7 +35,7 @@ image = cv2.imread("{project_root}/resources/benchmark{i}.jpg")
 avg_bgr = AvgBgr(125, 125, 133)
 start = IdentityProcessor()
 perspective_transformer = PerspectiveTransformer()
-foreground_remover_handler = ForegroundRemover()
+foreground_remover_handler = MediumForegroundRemover()
 color_adjuster_handler = ColorAdjuster(avg_bgr, 1.5, 50)
 idealize_colors_handler = ColorIdealizer(IdealizeColorsMode.MASKING)
 inpainter_handler = Inpainter()
