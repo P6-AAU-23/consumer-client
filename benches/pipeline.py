@@ -22,7 +22,7 @@ sys.path.append("{project_root}")
 from src.pipeline.pipeline import (
     IdentityProcessor,
     PerspectiveTransformer,
-    MediumForegroundRemover,
+    MediumForegroundMasker,
     ColorAdjuster,
     ColorIdealizer,
     Inpainter,
@@ -35,16 +35,16 @@ image = cv2.imread("{project_root}/resources/benchmark{i}.jpg")
 avg_bgr = AvgBgr(125, 125, 133)
 start = IdentityProcessor()
 perspective_transformer = PerspectiveTransformer()
-foreground_remover_handler = MediumForegroundRemover()
-color_adjuster_handler = ColorAdjuster(avg_bgr, 1.5, 50)
-idealize_colors_handler = ColorIdealizer(IdealizeColorsMode.MASKING)
-inpainter_handler = Inpainter()
+foreground_masker = MediumForegroundMasker()
+color_adjuster = ColorAdjuster(avg_bgr, 1.5, 50)
+color_idealizer = ColorIdealizer(IdealizeColorsMode.MASKING)
+inpainter = Inpainter()
 head = start
 head = head.set_next(perspective_transformer)
-head = head.set_next(foreground_remover_handler)
-head = head.set_next(color_adjuster_handler)
-head = head.set_next(idealize_colors_handler)
-head = head.set_next(inpainter_handler)
+head = head.set_next(foreground_masker)
+head = head.set_next(color_adjuster)
+head = head.set_next(color_idealizer)
+head = head.set_next(inpainter)
                 """,
             number=SCALE,
         )
