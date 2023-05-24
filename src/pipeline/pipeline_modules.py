@@ -12,7 +12,7 @@ from ..helper import distance, binarize, apply_mask, AvgBgr
 from torchvision.models import mobilenet_v3_small, MobileNet_V3_Small_Weights
 from torchvision.models.detection import fasterrcnn_mobilenet_v3_large_320_fpn, FasterRCNN_MobileNet_V3_Large_320_FPN_Weights
 from ..helper import (
-    RunningStats, dilate_black_regions, fullness, write_path_with_date_and_time
+    RunningStats, square_erode, fullness, write_path_with_date_and_time
 )
 
 
@@ -204,7 +204,7 @@ class MediumForegroundMasker(ImageProcessor):
         for person_box in person_boxes:
             xmin, ymin, xmax, ymax = person_box
             cv2.rectangle(mask, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (0), -1)
-        mask = dilate_black_regions(mask, iterations=30)
+        mask = square_erode(mask, iterations=30)
         return mask
 
 
@@ -251,7 +251,7 @@ class SlowForegroundMasker(ImageProcessor):
         prediction_in_numpy = output_predictions.byte().cpu().numpy()
 
         mask = cv2.inRange(prediction_in_numpy, 0, 0)
-        mask = dilate_black_regions(mask, iterations=30)
+        mask = square_erode(mask, iterations=30)
 
         return mask
 
