@@ -42,10 +42,10 @@ sudo apt-get install -y \
 ## Usage
 
 ### GUI wrapper for CLI
-1. `python3 server_gui`
+1. `python3 client_gui`
 
 ### Webcam
-1. `python3 server_cli`
+1. `python3 client_cli`
 
 ### OBS and tiangolo/nginx-rtmp
 1. `docker run -d -p 1935:1935 --name nginx-rtmp tiangolo/nginx-rtmp`
@@ -54,7 +54,7 @@ sudo apt-get install -y \
    2. Set server to `rtmp://localhost/live`
    3. Set stream key to anything you like
 3. In OBS Start Streaming
-4. `python3 server_cli.py --video_capture_address rtmp://localhost/live/{stream key}` replacing `{stream key}` with the stream key you set in OBS (this should run the pipeline on your stream)
+4. `python3 client_cli.py --video_capture_address rtmp://localhost/live/{stream key}` replacing `{stream key}` with the stream key you set in OBS (this should run the pipeline on your stream)
 
 ## Configuration
 
