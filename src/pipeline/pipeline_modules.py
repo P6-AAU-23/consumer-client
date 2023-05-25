@@ -12,7 +12,7 @@ from ..helper import distance, binarize, apply_mask, AvgBgr
 from torchvision.models import mobilenet_v3_small, MobileNet_V3_Small_Weights
 from torchvision.models.detection import fasterrcnn_mobilenet_v3_large_320_fpn, FasterRCNN_MobileNet_V3_Large_320_FPN_Weights
 from ..helper import (
-    RunningStats, dilate_black_regions, fullness, write_path_with_date_and_time
+    RunningStats, square_erode, fullness, write_path_with_date_and_time
 )
 
 
@@ -141,7 +141,7 @@ def image_to_tensor(image: np.ndarray) -> Tensor:
     return tensor.permute(2, 0, 1)
 
 
-class FastForegroundRemover(ImageProcessor):
+class FastForegroundMasker(ImageProcessor):
     def __init__(self):
         super().__init__()
         # TODO: Train own model with two labels "blocked" and "not blocked"
@@ -153,10 +153,10 @@ class FastForegroundRemover(ImageProcessor):
             self._model.to("cuda")
 
     def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
-        image_layers["foreground_mask"] = self.remove(image_layers["whiteboard"])
+        image_layers["foreground_mask"] = self.mask(image_layers["whiteboard"])
         return image_layers
 
-    def remove(self, image: np.ndarray) -> np.ndarray:
+    def mask(self, image: np.ndarray) -> np.ndarray:
         height, width, _ = image.shape
         tensor = image_to_tensor(image)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # type: ignore
@@ -174,7 +174,7 @@ class FastForegroundRemover(ImageProcessor):
             return np.zeros((height, width, 1), dtype=np.uint8)
 
 
-class MediumForegroundRemover(ImageProcessor):
+class MediumForegroundMasker(ImageProcessor):
     def __init__(self):
         super().__init__()
         self._weights = FasterRCNN_MobileNet_V3_Large_320_FPN_Weights.DEFAULT
@@ -185,10 +185,10 @@ class MediumForegroundRemover(ImageProcessor):
             self._model.to("cuda")
 
     def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
-        image_layers["foreground_mask"] = self.remove(image_layers["whiteboard"])
+        image_layers["foreground_mask"] = self.mask(image_layers["whiteboard"])
         return image_layers
 
-    def remove(self, image: np.ndarray) -> np.ndarray:
+    def mask(self, image: np.ndarray) -> np.ndarray:
         tensor = image_to_tensor(image)
         batch = self._preprocess(tensor).unsqueeze(0)
         if torch.cuda.is_available():
@@ -204,11 +204,11 @@ class MediumForegroundRemover(ImageProcessor):
         for person_box in person_boxes:
             xmin, ymin, xmax, ymax = person_box
             cv2.rectangle(mask, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (0), -1)
-        mask = dilate_black_regions(mask, iterations=30)
+        mask = square_erode(mask, iterations=30)
         return mask
 
 
-class SlowForegroundRemover(ImageProcessor):
+class SlowForegroundMasker(ImageProcessor):
     def __init__(self):
         super().__init__()
 
@@ -220,10 +220,10 @@ class SlowForegroundRemover(ImageProcessor):
         self.torch_model.eval()
 
     def _process(self, image_layers: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
-        image_layers["foreground_mask"] = self.remove(image_layers["whiteboard"])
+        image_layers["foreground_mask"] = self.mask(image_layers["whiteboard"])
         return image_layers
 
-    def remove(self, img: np.ndarray) -> np.ndarray:
+    def mask(self, img: np.ndarray) -> np.ndarray:
         input_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         preprocess = transforms.Compose(
             [
@@ -251,7 +251,7 @@ class SlowForegroundRemover(ImageProcessor):
         prediction_in_numpy = output_predictions.byte().cpu().numpy()
 
         mask = cv2.inRange(prediction_in_numpy, 0, 0)
-        mask = dilate_black_regions(mask, iterations=30)
+        mask = square_erode(mask, iterations=30)
 
         return mask
 
